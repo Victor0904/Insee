@@ -154,6 +154,8 @@ export type Effect =
   | { kind: 'external'; perYear: number; ages?: AgeRange }
   /** Multiplicateur du solde migratoire extérieur national. */
   | { kind: 'externalMult'; mult: number }
+  /** Âge de départ à la retraite (indicateur « pression retraites » ; aucun effet sur la population). */
+  | { kind: 'retirementAge'; age: number }
 
 export interface CascadeRule {
   /** Événement déclenché. */
@@ -170,10 +172,12 @@ export interface CascadeRule {
   because: string
 }
 
+export type EventFamily = 'sante' | 'climat' | 'economie' | 'politique' | 'societe' | 'imprevu' | 'perso'
+
 export interface EventDef {
   id: string
   name: string
-  family: 'sante' | 'climat' | 'economie' | 'politique' | 'societe' | 'imprevu' | 'perso'
+  family: EventFamily
   icon: string
   summary: string
   defaults: { duration: number; intensity: number; zone: Zone }
@@ -185,6 +189,8 @@ export interface EventDef {
   hypothesis: string
   source: string
   estimated: true
+  /** Événement qui n'apparaît qu'en conséquence d'un autre (cascade), pas dans la bibliothèque. */
+  cascadeOnly?: boolean
 }
 
 export interface ScenarioEvent {
@@ -228,6 +234,8 @@ export interface SimResult {
   flows?: Float32Array
   /** Événements effectivement simulés, y compris ceux issus des cascades. */
   events: ScenarioEvent[]
+  /** Âge de départ à la retraite retenu chaque année (64 sans événement). */
+  retirementAge: Float32Array
   /** Population négative tronquée à 0 (contrôle de cohérence, doit rester négligeable). */
   clipped: number
   elapsedMs: number

@@ -102,8 +102,12 @@ export function computeIndicators(data: ModelData, res: SimResult, deps: number[
   const under20 = sumRange(0, 19)
   const working = sumRange(20, 64)
   const seniors = sumRange(65, 100)
-  const retirees = sumRange(RATIOS.retirementAge, 100)
-  const contributors = sumRange(20, RATIOS.retirementAge - 1)
+  // âge de retraite de l'année (peut être modifié par un événement), interpolé entre deux âges entiers
+  const ra = res.retirementAge?.[yi] ?? RATIOS.retirementAge
+  const raInt = Math.floor(ra)
+  const frac = ra - raInt
+  const retirees = sumRange(raInt, 100) - frac * byAge[raInt]
+  const contributors = sumRange(20, raInt - 1) + frac * byAge[raInt]
   let area = 0
   for (const d of deps) area += data.areaKm2[d]
 

@@ -67,6 +67,7 @@ export interface YearModifiers {
   moves: { from: number[]; to: number[]; rate: Float64Array }[]
   extAdd: { deps: number[]; perYear: number; ages: AgeRange }[]
   extMult: number
+  retirementAge: number
 }
 
 export function createModifiers(data: ModelData): YearModifiers {
@@ -80,6 +81,7 @@ export function createModifiers(data: ModelData): YearModifiers {
     moves: [],
     extAdd: [],
     extMult: 1,
+    retirementAge: BASE_RETIREMENT_AGE,
   }
 }
 
@@ -100,6 +102,7 @@ export function prepareEvents(data: ModelData, events: ScenarioEvent[], catalog:
 }
 
 const ALL_AGES: AgeRange = [0, AGES - 1]
+export const BASE_RETIREMENT_AGE = 64
 
 /** Remplit `m` pour l'année y. Retourne vrai si au moins un événement est actif. */
 export function fillModifiers(data: ModelData, m: YearModifiers, events: CompiledEvent[], y: number): boolean {
@@ -111,6 +114,7 @@ export function fillModifiers(data: ModelData, m: YearModifiers, events: Compile
   m.moves = []
   m.extAdd = []
   m.extMult = 1
+  m.retirementAge = BASE_RETIREMENT_AGE
   let active = false
   const n = data.nDep
 
@@ -163,6 +167,9 @@ export function fillModifiers(data: ModelData, m: YearModifiers, events: Compile
           break
         case 'externalMult':
           m.extMult *= Math.max(0, 1 + (eff.mult - 1) * e)
+          break
+        case 'retirementAge':
+          m.retirementAge = Math.max(m.retirementAge, BASE_RETIREMENT_AGE + (eff.age - BASE_RETIREMENT_AGE) * Math.min(1, e))
           break
       }
     }

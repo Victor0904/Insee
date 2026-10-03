@@ -8,7 +8,7 @@ import { catalogFor } from '../events/catalog'
 let data: ModelData | null = null
 let lastRun = 0
 
-const transferables = (r: SimResult) => [r.pop.buffer, r.comps.buffer, ...(r.flows ? [r.flows.buffer] : [])]
+const transferables = (r: SimResult) => [r.pop.buffer, r.comps.buffer, r.retirementAge.buffer, ...(r.flows ? [r.flows.buffer] : [])]
 
 const api = {
   /** Charge et compile les données ; renvoie le scénario de référence (sans événement). */

@@ -47,6 +47,7 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   const pop = new Float32Array(Y * block)
   const comps = new Float32Array(Y * n * N_COMP)
   const flows = opts.recordFlows ? new Float32Array(Y * n * n) : undefined
+  const retirementAge = new Float32Array(Y).fill(64)
 
   let cur = Float64Array.from(data.pop0)
   let next = new Float64Array(block)
@@ -72,6 +73,7 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
     const y = data.startYear + yi
     // remet les modificateurs à leur valeur neutre puis applique les événements actifs
     if (yi === 0 || compiled.length > 0) fillModifiers(data, mods, compiled, y)
+    retirementAge[yi] = mods.retirementAge
 
     if (r > 0) {
       const gf = lognormalFactor(rand, 0.04 * r)
@@ -282,5 +284,9 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   }
 
   const t1 = typeof performance !== 'undefined' ? performance.now() : Date.now()
-  return { startYear: data.startYear, nYears: Y, nDep: n, pop, comps, flows, events, clipped, elapsedMs: t1 - t0 }
+  if (compiled.length > 0) {
+    fillModifiers(data, mods, compiled, data.endYear)
+    retirementAge[Y - 1] = mods.retirementAge
+  }
+  return { startYear: data.startYear, nYears: Y, nDep: n, pop, comps, flows, retirementAge, events, clipped, elapsedMs: t1 - t0 }
 }
