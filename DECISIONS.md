@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 1 (4 octobre 2026).
+Dernière mise à jour : jalon 2 (4 octobre 2026).
 
 ---
 
@@ -126,3 +126,18 @@ Valeurs au jalon 1 (écart = moteur − officiel) :
 - L'âge simple départemental est reconstruit à partir de classes quinquennales (§ 3.1).
 - Aucun ajustement du recensement n'est fait (l'Insee « ajuste » ses estimations ; pas le moteur).
 - Au-delà de 2070, les hypothèses sont prolongées par le jeu.
+
+## 8. Interface — jalon 2 (carte, frise, lecture)
+
+| Choix | Raison |
+|---|---|
+| Carte SVG D3-geo, projection conique conforme (parallèles 44° et 49°, proche de Lambert-93) | 96 polygones : le SVG suffit et rend chaque département cliquable et lisible ; pas besoin de fond de carte tuilé (MapLibre écarté) |
+| Échelles en **9 classes fixes sur 2025-2100** | Une couleur garde le même sens pendant toute la lecture. Couches signées : divergente bleu/orange + **hachures sur les baisses** ; couches de niveau : séquentielle cividis |
+| Flux migratoires sur un `<canvas>` superposé | Particules animées sans alourdir le DOM. On montre les ~36 flux **nets** qui maximisent volume × √distance, en écartant les voisins immédiats, qui satureraient l'Île-de-France. Mouvement réduit : flèches fixes |
+| Navigation clavier de la carte | La carte est un seul arrêt de tabulation (`role="application"`) : flèches = département voisin dans la direction (cône de ±60°), Entrée = choisir, Échap = France. Annonce vocale du département et de la valeur. Alternative : menu « Choisir une autre zone » |
+| Frise = `input type="range"` natif | Clavier (flèches, Début, Fin, Page préc./suiv.) et lecteurs d'écran gratuits ; lecture à 2 ans/s × vitesse (×1, ×2, ×4) |
+| Téléphone | La carte reste plein écran, le panneau d'analyse devient un tiroir (Échap, voile, focus rendu) et la légende se replie en bandeau de couleurs |
+| Thème clair / sombre / automatique | Mémorisé localement ; les couleurs des données ont une variante par thème, avec un contraste AA vérifié par axe-core dans les tests |
+| Libellés sans jargon | « Seniors pour 100 actifs », « Arrivées moins départs » ; le terme technique s'affiche au survol et au focus (`Term`) |
+
+Limite : les flux affichés sont des flux **nets** de l'année ; les flux bruts, bien plus nombreux, ne sont pas représentés.

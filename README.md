@@ -2,7 +2,7 @@
 
 Un jeu de simulation démographique de la France dans le navigateur. On déclenche des événements (pandémie, canicules, politique nataliste, exode urbain…) et on observe, année après année et département par département, comment la population s'écarte d'un scénario de référence fondé sur les données de l'Insee.
 
-> **État : jalon 1 — données, moteur et validation.** L'écran actuel montre le scénario de référence et ses contrôles face aux projections officielles. La carte, la frise et les événements arrivent aux jalons suivants.
+> **État : jalon 2 — carte, frise et lecture dans le temps.** La carte de France colore les départements (évolution, âge médian, seniors pour 100 actifs…) et montre les déménagements ; la frise fait défiler 2025-2100. Les événements arrivent au jalon 3.
 
 ## Installation
 
@@ -21,7 +21,7 @@ Les données compactes sont déjà dans `public/data/` : aucun téléchargement 
 |---|---|
 | `npm run dev` | Serveur de développement |
 | `npm test` | Tests du moteur (conservation, agrégations, déterminisme, performance, validation) |
-| `npm run e2e` | Parcours Playwright (à partir du jalon 2) |
+| `npm run e2e` | Parcours Playwright (lecture, clavier, zones, accessibilité axe en clair et en sombre, ordinateur et téléphone) |
 | `npm run lint` / `npm run typecheck` | Qualité du code |
 | `npm run build` | Version de production dans `dist/` |
 | `npm run data` | Retélécharge les sources Insee (≈ 200 Mo) et reconstruit `public/data/` |

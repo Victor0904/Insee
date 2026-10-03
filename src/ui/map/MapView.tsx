@@ -1,0 +1,105 @@
+import { useId, useMemo } from 'react'
+import { useApp, type LayerId } from '../../state/appStore'
+import { Icon } from '../common/Icon'
+import { Term } from '../common/Term'
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { PALETTES, type Theme } from '../theme'
+import { FranceMap } from './FranceMap'
+import type { MapGeometry } from './geo'
+import { buildScale, layerById, layerMatrix, LAYERS } from './layers'
+import './MapView.css'
+
+/** Carte + choix de la couche + légende en cartouche. */
+export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
+  const data = useApp((s) => s.data)!
+  const baseline = useApp((s) => s.baseline)!
+  const result = useApp((s) => s.result)!
+  const year = useApp((s) => s.year)
+  const layerId = useApp((s) => s.layer)
+  const setLayer = useApp((s) => s.setLayer)
+  const showFlows = useApp((s) => s.showFlows)
+  const setShowFlows = useApp((s) => s.setShowFlows)
+  const selectId = useId()
+  const narrow = useMediaQuery('(max-width: 960px)')
+  const setPanelOpen = useApp((s) => s.setPanelOpen)
+  const panelOpen = useApp((s) => s.panelOpen)
+
+  const layer = layerById(layerId)
+  const matrix = useMemo(() => layerMatrix(data, baseline, result, layerId), [data, baseline, result, layerId])
+  const scale = useMemo(() => buildScale(layer, matrix, PALETTES[theme]), [layer, matrix, theme])
+  const yi = year - data.startYear
+  const n = data.nDep
+  const values = useMemo(() => matrix.subarray(yi * n, (yi + 1) * n), [matrix, yi, n])
+  const flows = useMemo(() => {
+    if (!result.flows) return null
+    const fy = Math.min(yi, result.nYears - 2)
+    return result.flows.subarray(fy * n * n, (fy + 1) * n * n)
+  }, [result, yi, n])
+
+  return (
+    <section className="mapview" aria-label="Carte de France">
+      <div className="mapview__bar">
+        <label id={`${selectId}-label`} htmlFor={selectId} className="mapview__label">
+          La carte montre
+        </label>
+        <select id={selectId} className="select" value={layerId} onChange={(e) => setLayer(e.target.value as LayerId)}>
+          {LAYERS.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="toggle"
+          aria-pressed={showFlows}
+          onClick={() => setShowFlows(!showFlows)}
+          title="Afficher les principaux déménagements entre départements"
+        >
+          <Icon name="flows" size={18} />
+          Flux
+        </button>
+        <button
+          type="button"
+          className="toggle mapview__analysis"
+          onClick={() => setPanelOpen(true)}
+          aria-expanded={panelOpen}
+          aria-controls="analyse"
+        >
+          <Icon name="chart" size={18} />
+          Analyse
+        </button>
+      </div>
+      <div className="mapview__stage">
+        <FranceMap data={data} geom={geom} values={values} scale={scale} layer={layer} theme={theme} flows={flows} flowCount={narrow ? 20 : 36} />
+        <details className="legend" open={!narrow} key={narrow ? 'n' : 'w'}>
+          <summary className="legend__title">
+            <span>
+              <Term technical={layer.technical}>{layer.label}</Term>
+            </span>
+            <span className="legend__year">{year}</span>
+            <span className="legend__strip" aria-hidden="true">
+              {scale.colors.map((c, i) => (
+                <span key={c + i} style={{ background: c }} />
+              ))}
+            </span>
+          </summary>
+          <ol className="legend__classes">
+            {scale.colors.map((c, i) => (
+              <li key={c + i}>
+                <span
+                  className={`legend__swatch ${layer.kind === 'signed' && i < 4 ? 'legend__swatch--loss' : ''}`}
+                  style={{ background: c }}
+                />
+                {scale.labels[i]}
+              </li>
+            ))}
+          </ol>
+          <p className="legend__note">{layer.explain}</p>
+          {layer.kind === 'signed' && <p className="legend__note">Hachures : baisse.</p>}
+          {showFlows && <p className="legend__note">Arcs : principaux déménagements nets de l’année.</p>}
+        </details>
+      </div>
+    </section>
+  )
+}

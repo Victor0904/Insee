@@ -1,0 +1,212 @@
+.shell {
+  height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--sp-2);
+  top: -60px;
+  z-index: 100;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--action);
+  color: var(--on-action);
+  border-radius: var(--radius-control);
+}
+
+.skip-link:focus {
+  top: var(--sp-2);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-2) var(--sp-4);
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.brand__mark {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: var(--fs-28);
+  line-height: 1.1;
+}
+
+.brand__sub {
+  font-size: var(--fs-14);
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+}
+
+.topbar__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.topbar__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 var(--sp-2);
+  color: var(--ink);
+  font-size: var(--fs-14);
+  text-decoration: none;
+  border-radius: var(--radius-control);
+}
+
+.topbar__link:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--ink);
+}
+
+.icon-btn:hover {
+  border-color: var(--control);
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr minmax(320px, 380px);
+  min-height: 0;
+}
+
+.stage:focus {
+  outline: none;
+}
+
+.stage__map {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--sp-2) var(--sp-4) var(--sp-3);
+}
+
+.stage__panel {
+  overflow-y: auto;
+  padding: var(--sp-4) var(--sp-4) var(--sp-6);
+  background: var(--surface);
+  border-left: 1px solid var(--rule);
+}
+
+.stage__close,
+.stage__open-panel,
+.stage__scrim {
+  display: none;
+}
+
+.link-back {
+  color: var(--ink);
+}
+
+@media (max-width: 960px) {
+  .brand__sub,
+  .topbar__link span {
+    display: none;
+  }
+
+  .stage {
+    grid-template-columns: 1fr;
+  }
+
+  .stage__map {
+    padding: var(--sp-1) var(--sp-2) var(--sp-2);
+  }
+
+  .stage__open-panel {
+    position: absolute;
+    right: var(--sp-3);
+    bottom: var(--sp-3);
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-2);
+    max-width: calc(100% - 200px);
+    min-height: 44px;
+    padding: 0 var(--sp-3);
+    background: var(--surface);
+    color: var(--ink);
+    border: 1px solid var(--control);
+    border-radius: 999px;
+    box-shadow: var(--shadow);
+    font-size: var(--fs-14);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .stage__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 20;
+    max-height: 82%;
+    border-left: none;
+    border-top: 1px solid var(--control);
+    border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+    box-shadow: 0 -8px 24px rgb(0 0 0 / 0.18);
+    transform: translateY(105%);
+    visibility: hidden;
+    transition:
+      transform var(--dur-out) var(--ease-out),
+      visibility 0s linear var(--dur-out);
+  }
+
+  .stage__panel.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform var(--dur-in) var(--ease-in);
+  }
+
+  .stage__close {
+    display: inline-grid;
+    position: sticky;
+    top: 0;
+    float: right;
+    margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) 0 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .stage__scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 15;
+    background: rgb(0 0 0 / 0.35);
+  }
+}
+
+@media (max-width: 960px) and (min-width: 600px) {
+  .stage__open-panel {
+    max-width: 60%;
+  }
+}
