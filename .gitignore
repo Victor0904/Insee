@@ -1,0 +1,8 @@
+node_modules
+dist
+.cache
+.venv-data
+__pycache__
+test-results
+playwright-report
+*.local

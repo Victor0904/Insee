@@ -1,0 +1,169 @@
+/* Design system « Et si… ? » — voir design-system/MASTER.md */
+@import '@fontsource/newsreader/500.css';
+@import '@fontsource/newsreader/600.css';
+@import '@fontsource/newsreader/500-italic.css';
+@import '@fontsource/atkinson-hyperlegible-next/400.css';
+@import '@fontsource/atkinson-hyperlegible-next/600.css';
+
+:root {
+  color-scheme: light;
+  --paper: #f4f2ec;
+  --surface: #fbfaf6;
+  --surface-2: #efece4;
+  --ink: #18202b;
+  --ink-muted: #4b5563;
+  --rule: #cbc6b8;
+  --control: #7d7768;
+  --action: #18202b;
+  --on-action: #fbfaf6;
+  --focus: #6d28d9;
+  --gain: #1f5fa6;
+  --gain-soft: #c9dcef;
+  --loss: #a9520a;
+  --loss-soft: #f6dcc2;
+  --neutral: #e9e6dd;
+  --ref: #5c6370;
+  --shadow: 0 1px 2px rgb(24 32 43 / 0.06), 0 4px 16px rgb(24 32 43 / 0.06);
+
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  --fs-12: 0.75rem;
+  --fs-14: 0.875rem;
+  --fs-16: 1rem;
+  --fs-20: 1.25rem;
+  --fs-28: 1.75rem;
+  --fs-40: 2.5rem;
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-12: 48px;
+
+  --radius-control: 4px;
+  --radius-panel: 8px;
+
+  --dur-in: 220ms;
+  --dur-out: 140ms;
+  --ease-in: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.4, 0, 1, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --paper: #0f141b;
+    --surface: #161d26;
+    --surface-2: #1d2631;
+    --ink: #eceae3;
+    --ink-muted: #a9b1bc;
+    --rule: #2d3744;
+    --control: #66748a;
+    --action: #eceae3;
+    --on-action: #0f141b;
+    --focus: #c4b5fd;
+    --gain: #7db3e8;
+    --gain-soft: #1e3a57;
+    --loss: #f2a65a;
+    --loss-soft: #4a2e14;
+    --neutral: #222b36;
+    --ref: #9aa3ae;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --paper: #0f141b;
+  --surface: #161d26;
+  --surface-2: #1d2631;
+  --ink: #eceae3;
+  --ink-muted: #a9b1bc;
+  --rule: #2d3744;
+  --control: #66748a;
+  --action: #eceae3;
+  --on-action: #0f141b;
+  --focus: #c4b5fd;
+  --gain: #7db3e8;
+  --gain-soft: #1e3a57;
+  --loss: #f2a65a;
+  --loss-soft: #4a2e14;
+  --neutral: #222b36;
+  --ref: #9aa3ae;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 4px 16px rgb(0 0 0 / 0.3);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0;
+  text-wrap: balance;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.estimated {
+  text-decoration: underline dotted var(--ink-muted);
+  text-underline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
