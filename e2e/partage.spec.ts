@@ -21,7 +21,7 @@ async function openScenario(page: Page) {
 test.beforeEach(async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write']).catch(() => {})
   await page.goto('/?tutoriel=0')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
 })
 
 test('partager un lien : le scénario s’ouvre à l’identique ailleurs', async ({ page, context }) => {
@@ -36,7 +36,7 @@ test('partager un lien : le scénario s’ouvre à l’identique ailleurs', asyn
   // un autre visiteur ouvre le lien
   const other = await context.newPage()
   await other.goto(link)
-  await expect(other.locator('.map__dep')).toHaveCount(96)
+  await expect(other.locator('.map__dep')).toHaveCount(101)
   await expect(other.locator('.lanes button.block')).toHaveCount(2)
   await expect(other.locator('.toast')).toContainText('Ouest et natalité')
   await expect(other.locator('.coach')).toHaveCount(0) // pas de tutoriel pour un lien partagé
@@ -45,7 +45,7 @@ test('partager un lien : le scénario s’ouvre à l’identique ailleurs', asyn
 
 test('un lien abîmé affiche un message sans casser le jeu', async ({ page }) => {
   await page.goto('/?s=abime!!')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await expect(page.locator('.toast')).toContainText('illisible')
 })
 
@@ -60,7 +60,7 @@ test('enregistrer, recharger et supprimer un scénario sur l’appareil', async 
   await dlg.getByRole('button', { name: /Confirmer : tout effacer/ }).click()
   await expect(page.locator('.lanes .block')).toHaveCount(0)
   await page.reload()
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await openScenario(page)
   await dlg.getByRole('button', { name: 'Charger Campagne 2040' }).click()
   await expect(page.locator('.lanes button.block')).toHaveCount(1)
@@ -84,7 +84,7 @@ test('exporter la carte en PNG, les données en CSV et le scénario en JSON, pui
 
   const [csv] = await Promise.all([page.waitForEvent('download'), dlg.getByRole('button', { name: 'Tous les départements (CSV)' }).click()])
   const csvText = readFileSync((await csv.path())!, 'utf8')
-  expect(csvText.split('\n').filter((l) => /^\d|^2[AB]/.test(l))).toHaveLength(96)
+  expect(csvText.split('\n').filter((l) => /^\d|^2[AB]/.test(l))).toHaveLength(101)
   expect(csvText).toContain('Creuse')
 
   const [zone] = await Promise.all([page.waitForEvent('download'), dlg.getByRole('button', { name: 'Données de la zone (CSV)' }).click()])

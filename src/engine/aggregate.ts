@@ -19,7 +19,7 @@ export function areaDeps(data: ModelData, area: AreaRef): number[] {
 export function areaName(data: ModelData, area: AreaRef): string {
   switch (area.level) {
     case 'france':
-      return 'France métropolitaine'
+      return 'France'
     case 'region':
       return data.regions.find((r) => r.code === area.code)?.name ?? area.code
     case 'dep':

@@ -2,7 +2,7 @@ import { computeIndicators, totalPop } from './indicators'
 import type { ModelData, ReferenceJson, SimResult } from './types'
 
 export interface ValidationReport {
-  /** Indice d'évolution (base 1 en 2025) : moteur (métropole) contre projections Insee 2026 (France entière). */
+  /** Indice d'évolution (base 1 en 2025) : moteur contre projections Insee 2026 (France entière, même périmètre). */
   national: { year: number; engine: number; official: number; gapPts: number }[]
   /** Part des 65 ans et plus (points de %). */
   seniors: { year: number; engine: number; official: number; gapPts: number }[]

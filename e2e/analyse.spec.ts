@@ -17,7 +17,7 @@ async function openPanel(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/?tutoriel=0')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await placeDefault(page, 'Télétravail généralisé')
   await page.getByRole('slider', { name: 'Année affichée' }).fill('2050')
   await openPanel(page)
@@ -50,7 +50,7 @@ test('onglets au clavier : pyramide, courbes, petits multiples', async ({ page }
   await expect(page.getByRole('combobox', { name: 'Indicateur' })).toBeVisible()
   await page.keyboard.press('End')
   const grid = page.locator('.multiples__grid button')
-  await expect(grid).toHaveCount(13)
+  await expect(grid).toHaveCount(18) // 13 régions de métropole + 5 d'outre-mer
   await page.getByRole('button', { name: /^Île-de-France :/ }).click()
   await expect(page.locator('#zone-title')).toHaveText('Île-de-France')
 })

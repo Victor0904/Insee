@@ -89,7 +89,7 @@ export function ZonePanel() {
         Choisir une autre zone
       </label>
       <select id={pickId} className="select zone__pick" value={encode(selection)} onChange={(e) => select(decode(e.target.value))}>
-        <option value="FR">France métropolitaine</option>
+        <option value="FR">France entière</option>
         <optgroup label="Régions">
           {data.regions.map((r) => (
             <option key={r.code} value={`region:${r.code}`}>

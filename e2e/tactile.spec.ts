@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test('au doigt, la poignée d’une carte la glisse sur un département', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'geste tactile : parcours téléphone')
   await page.goto('/?tutoriel=0')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await page.getByRole('button', { name: 'Événements', exact: true }).click()
   const card = page.locator('.ev-card', { hasText: 'Catastrophe naturelle' })
   await card.scrollIntoViewIfNeeded()
@@ -31,7 +31,7 @@ test('au doigt, la poignée d’une carte la glisse sur un département', async 
 test('au doigt, faire défiler la liste ne déclenche pas de glisser', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'geste tactile : parcours téléphone')
   await page.goto('/?tutoriel=0')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await page.getByRole('button', { name: 'Événements', exact: true }).click()
   const body = page.locator('.ev-card__summary').first()
   const b = (await body.boundingBox())!

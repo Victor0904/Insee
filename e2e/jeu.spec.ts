@@ -20,7 +20,7 @@ async function chooseMode(page: Page, label: string) {
 
 test('le tutoriel se fait en jouant, en 4 étapes', async ({ page }) => {
   await page.goto('/')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   const coach = page.getByRole('dialog', { name: 'Voici la France de 2025' })
   await expect(coach).toBeVisible()
   await page.getByRole('button', { name: 'Lancer le temps' }).click()
@@ -37,14 +37,14 @@ test('le tutoriel se fait en jouant, en 4 étapes', async ({ page }) => {
   await expect(page.locator('.coach')).toHaveCount(0)
   // ne revient pas au rechargement
   await page.reload()
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
   await expect(page.locator('.coach')).toHaveCount(0)
 })
 
 test.describe('modes de jeu', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/?tutoriel=0')
-    await expect(page.locator('.map__dep')).toHaveCount(96)
+    await expect(page.locator('.map__dep')).toHaveCount(101)
   })
 
   test('réussir le défi « Sauver la Creuse »', async ({ page }) => {

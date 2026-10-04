@@ -11,7 +11,7 @@ describe('performance', () => {
     const runs = Array.from({ length: 5 }, () => simulate(data, emptyScenario(), noCatalog, { recordFlows: true }).elapsedMs)
     const best = Math.min(...runs)
     const median = runs.sort((a, b) => a - b)[2]
-    console.info(`[perf] simulation 2025-2100, 96 dép. × 2 sexes × 101 âges : médiane ${median.toFixed(0)} ms, meilleure ${best.toFixed(0)} ms`)
+    console.info(`[perf] simulation 2025-2100, 101 dép. × 2 sexes × 101 âges : médiane ${median.toFixed(0)} ms, meilleure ${best.toFixed(0)} ms`)
     expect(median).toBeLessThan(200)
   })
 })

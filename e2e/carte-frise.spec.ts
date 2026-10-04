@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/?tutoriel=0')
-  await expect(page.locator('.map__dep')).toHaveCount(96)
+  await expect(page.locator('.map__dep')).toHaveCount(101)
 })
 
 test('la lecture fait avancer le temps et toute l’interface suit', async ({ page }) => {
@@ -35,12 +35,12 @@ test('on choisit un département au clavier sur la carte, puis on remonte à la 
   await page.keyboard.press('ArrowLeft')
   await page.keyboard.press('Enter')
   const title = page.locator('#zone-title')
-  await expect(title).not.toHaveText('France métropolitaine')
+  await expect(title).not.toHaveText('France')
   await page.getByRole('navigation', { name: 'Niveau géographique' }).getByRole('button').nth(1).click()
   await expect(page.getByRole('navigation', { name: 'Niveau géographique' }).getByRole('button', { name: /./ }).last()).toHaveAttribute('aria-current', 'true')
   await map.focus()
   await page.keyboard.press('Escape')
-  await expect(title).toHaveText('France métropolitaine')
+  await expect(title).toHaveText('France')
 })
 
 test('le sélecteur de zone est une alternative à la carte', async ({ page }) => {
@@ -58,7 +58,7 @@ for (const scheme of ['light', 'dark'] as const) {
   test(`aucune violation d’accessibilité détectée (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' })
     await page.reload()
-    await expect(page.locator('.map__dep')).toHaveCount(96)
+    await expect(page.locator('.map__dep')).toHaveCount(101)
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} élément(s) — ${v.help} — ${v.nodes.map((n) => n.target + ' ' + (n.failureSummary ?? '').slice(0, 160)).join(' | ')}`)).toEqual([])
   })

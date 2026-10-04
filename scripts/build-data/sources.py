@@ -98,10 +98,10 @@ SOURCES = [
     },
     {
         "id": "contours",
-        "file": "departements.geojson",
-        "url": "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-version-simplifiee.geojson",
+        "file": "departements-avec-outre-mer.geojson",
+        "url": "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements-avec-outre-mer.geojson",
         "page": "https://github.com/gregoiredavid/france-geojson",
-        "title": "Contours simplifiés des départements (dérivés d'IGN Admin Express COG)",
+        "title": "Contours des départements, outre-mer compris (dérivés d'IGN Admin Express COG), simplifiés au moment de la construction",
         "producer": "IGN Admin Express, simplification france-geojson (G. David)",
         "date": "2018 (géographie départementale inchangée depuis)",
         "use": "Fond de carte",

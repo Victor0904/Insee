@@ -120,3 +120,15 @@
   stroke: var(--focus);
   stroke-width: 2.5;
 }
+
+.map__inset {
+  fill: none;
+  stroke: var(--control);
+  stroke-width: 1;
+}
+
+.map__inset-label {
+  fill: var(--ink-muted);
+  font-size: 10px;
+  pointer-events: none;
+}

@@ -95,12 +95,12 @@ export const CHALLENGES: Challenge[] = [
   {
     id: 'soixante-six',
     title: 'Pas de déclin',
-    goal: 'La France métropolitaine compte au moins 66 millions d’habitants en 2100.',
+    goal: 'La France compte au moins 68 millions d’habitants en 2100, autant qu’aujourd’hui.',
     measure: 'Habitants en 2100',
     year: 2100,
     maxEvents: 3,
-    hint: 'La référence descend à moins de 56 millions : les décès dépassent les naissances dès les années 2030.',
-    check: (c) => ({ value: totalPop(c.result, fr(c.data), yiOf(c.data, 2100)), target: 66e6, dir: 'atLeast', format: people }),
+    hint: 'La référence descend sous 60 millions : les décès dépassent les naissances dès les années 2030.',
+    check: (c) => ({ value: totalPop(c.result, fr(c.data), yiOf(c.data, 2100)), target: 68e6, dir: 'atLeast', format: people }),
     solution: [
       { type: 'politique-nataliste', start: 2026, duration: 74, intensity: 1, zone: FR },
       { type: 'ouverture-migratoire', start: 2026, duration: 74, intensity: 1, zone: FR },

@@ -68,7 +68,7 @@ export function MethodPage() {
       <main className="method__body">
         <section id="modele" tabIndex={-1} className="method__section">
           <h2>Le modèle en quatre gestes</h2>
-          <p>Chaque année, pour chacun des 96 départements, pour les hommes et les femmes, et pour chaque âge de 0 à 100 ans :</p>
+          <p>Chaque année, pour chacun des 101 départements (outre-mer compris), pour les hommes et les femmes, et pour chaque âge de 0 à 100 ans :</p>
           <ol className="method__steps">
             <li>
               <strong>On vieillit d’un an.</strong> Une petite partie des habitants décède, selon les risques de décès de
@@ -97,7 +97,7 @@ export function MethodPage() {
           <ul>
             <li>fécondité : 1,61 enfant par femme en 2024, puis 1,45 à partir de 2028 ;</li>
             <li>espérance de vie : elle continue de progresser selon les hypothèses de mortalité de l’Insee, publiées jusqu’en 2125 ;</li>
-            <li>solde migratoire avec l’étranger : +150 000 personnes par an pour la France entière (environ 145 000 pour la métropole).</li>
+            <li>solde migratoire avec l’étranger : +150 000 personnes par an.</li>
           </ul>
           <p>
             L’Insee ne publie pas d’hypothèses de fécondité et de migration après {horizon}. <strong>Au-delà, le jeu les prolonge au niveau de {horizon}</strong>{' '}
@@ -245,12 +245,12 @@ export function MethodPage() {
             <li>Les déménagements entre départements gardent les habitudes observées vers 2022 ; seuls les événements les changent.</li>
             <li>Chaque département garde le même écart de fécondité et de mortalité avec la moyenne nationale jusqu’en 2100.</li>
             <li>
-              Le futur de référence perd un peu plus d’habitants que la projection officielle (environ 1 point d’écart en
-              2070) ; celle-ci couvre la France entière, où les départements d’outre-mer grandissent plus vite.
+              Le futur de référence s’écarte un peu de la projection officielle (moins d’un point d’écart d’ici 2070 sur
+              l’évolution de la population : voir les vérifications).
             </li>
             <li>Les effets des événements sont des hypothèses de jeu : le jeu sert à comprendre des mécanismes, pas à prédire.</li>
             <li>Les petits départements sont les plus sensibles aux hypothèses ; un écart de quelques milliers d’habitants n’est pas significatif.</li>
-            <li>Les départements et régions d’outre-mer ne sont pas encore simulés.</li>
+            <li>À Mayotte, le recensement n’entre pas dans le fichier national des migrations : les déménagements entre Mayotte et le reste de la France sont donc ignorés (le solde avec l’étranger, lui, est pris en compte).</li>
           </ul>
         </section>
 
@@ -258,7 +258,7 @@ export function MethodPage() {
           <h2>Sous le capot</h2>
           <ul>
             <li>
-              Une simulation complète (96 départements × 2 sexes × 101 âges × 75 ans) tourne dans un Web Worker, sans
+              Une simulation complète (101 départements × 2 sexes × 101 âges × 75 ans) tourne dans un Web Worker, sans
               bloquer l’interface : {baseline ? <strong>{Math.round(baseline.elapsedMs)} ms</strong> : '—'} sur cet appareil
               pour le futur de référence.
             </li>

@@ -9,7 +9,7 @@ import { useDrag } from '../dnd/drag'
 import { useSize } from '../hooks/useSize'
 import { PALETTES, usePrefersReducedMotion, type Theme } from '../theme'
 import { FlowCanvas } from './FlowCanvas'
-import { makeProjection, neighborInDirection, projectAll, type MapGeometry } from './geo'
+import { neighborInDirection, projectAll, type MapGeometry } from './geo'
 import type { ClassScale, LayerDef } from './layers'
 import './FranceMap.css'
 
@@ -52,7 +52,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
 
   const projected = useMemo(() => {
     if (!width || !height) return null
-    return projectAll(geom, makeProjection(geom, width, height))
+    return projectAll(geom, width, height)
   }, [geom, width, height])
 
   const selected = useMemo(() => new Set(areaDeps(data, selection)), [data, selection])
@@ -115,6 +115,16 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
               <line x1="0" y1="0" x2="0" y2="5" className="map__hatch" />
             </pattern>
           </defs>
+          <g className="map__insets" aria-hidden="true">
+            {projected.insets.map((b) => (
+              <g key={b.index}>
+                <rect x={b.x} y={b.y} width={b.w} height={b.h} rx={3} className="map__inset" />
+                <text x={b.x + b.w / 2} y={b.y + b.h - 4} textAnchor="middle" className="map__inset-label">
+                  {b.name}
+                </text>
+              </g>
+            ))}
+          </g>
           <g className={`map__deps ${reduced ? '' : 'map__deps--animated'}`}>
             {projected.paths.map((p, d) => (
               <path

@@ -33,6 +33,9 @@ AGES = 101
 START_YEAR = 2025
 END_YEAR = 2100
 METRO_REGIONS = ["11", "24", "27", "28", "32", "44", "52", "53", "75", "76", "84", "93", "94"]
+# Départements et régions d'outre-mer (code département → code région)
+DROM = {"971": "01", "972": "02", "973": "03", "974": "04", "976": "06"}
+ALL_REGIONS = METRO_REGIONS + list(DROM.values())
 # Grandes classes d'âge pour les matrices de destination des migrations internes.
 # Répartition géographique du solde extérieur : "inflow" (arrivées observées au recensement)
 # ou "residual" (solde apparent DEP1 moins migrations internes). Voir DECISIONS.md.
@@ -94,13 +97,17 @@ def write(name, obj):
 
 
 def is_dep_code(code) -> bool:
-    """Vrai pour un code « REG-DEP » métropolitain (4 caractères, ex. '1175', 8415, '942A')."""
-    return code is not None and len(str(code)) == 4 and not str(code).startswith("97")
+    """Vrai pour un département dans les tableaux DEP1-4 : « REG-DEP » métropolitain (ex. '1175', 8415,
+    '942A') ou code à 3 chiffres d'un DROM (ex. 971, '976')."""
+    if code is None:
+        return False
+    c = str(code)
+    return (len(c) == 4 and not c.startswith("97")) or c in DROM
 
 
 def dep_from_code(code: str) -> str:
     """Code « REG-DEP » de DEP1/3/4 (ex. '1175', '942A') → code département."""
-    return code[2:]
+    return code if code in DROM else code[2:]
 
 
 # ----------------------------------------------------------------------------- géographie
@@ -109,26 +116,28 @@ def build_meta():
     wb = openpyxl.load_workbook(RAW / "estim-pop-dep-sexe-aq-1975-2026.xlsx", read_only=True)
     deps = []
     for r in rows(wb, "2026"):
-        if r[0] and isinstance(r[0], str) and len(r[0]) in (2, 3) and r[0][:2] != "97" and r[1]:
-            if r[0].isdigit() or r[0] in ("2A", "2B"):
-                deps.append({"code": r[0], "name": r[1]})
-    assert len(deps) == 96, len(deps)
+        c = str(r[0]) if r[0] is not None else ""
+        if c and len(c) in (2, 3) and r[1]:
+            if (c.isdigit() and (len(c) == 2 or c in DROM)) or c in ("2A", "2B"):
+                deps.append({"code": c, "name": str(r[1]).strip()})
+    assert len(deps) == 101, len(deps)
 
     # Région de chaque département : préfixe du code REG-DEP de DEP1.
     wb1 = openpyxl.load_workbook(RAW / "1_Pop_annu_compo_evol_depreg.xlsx", read_only=True)
     reg_of = {}
     for r in rows(wb1, "2023"):
         if r[1] and is_dep_code(r[1]):
-            reg_of[dep_from_code(str(r[1]))] = str(r[1])[:2]
+            code = dep_from_code(str(r[1]))
+            reg_of[code] = DROM.get(code, str(r[1])[:2])
     for d in deps:
         d["reg"] = reg_of[d["code"]]
 
     wbo = openpyxl.load_workbook(RAW / "projections_scenario_central.xlsx", read_only=True)
     reg_names = {}
     for r in rows(wbo, "Population_REG"):
-        if r[0] in METRO_REGIONS:
+        if r[0] in ALL_REGIONS:
             reg_names[r[0]] = r[1]
-    regions = [{"code": c, "name": reg_names[c]} for c in METRO_REGIONS]
+    regions = [{"code": c, "name": reg_names[c]} for c in ALL_REGIONS]
     assert all(d["reg"] in reg_names for d in deps)
     return deps, regions
 
@@ -178,11 +187,12 @@ def estimate_rows(year):
     wb = openpyxl.load_workbook(RAW / "estim-pop-dep-sexe-aq-1975-2026.xlsx", read_only=True)
     res = {}
     for r in rows(wb, str(year)):
-        if r[0] and isinstance(r[0], str) and (r[0].isdigit() or r[0] in ("2A", "2B")) and r[0][:2] != "97":
+        c = str(r[0]) if r[0] is not None else ""
+        if c and ((c.isdigit() and (len(c) == 2 or c in DROM)) or c in ("2A", "2B")):
             hom = [float(x) for x in r[23:43]]
             fem = [float(x) for x in r[44:64]]
-            assert abs(sum(hom) - float(r[43])) < 1 and abs(sum(fem) - float(r[64])) < 1, r[0]
-            res[r[0]] = (hom, fem)
+            assert abs(sum(hom) - float(r[43])) < 1 and abs(sum(fem) - float(r[64])) < 1, c
+            res[c] = (hom, fem)
     return res
 
 
@@ -383,12 +393,12 @@ def build_internal_migration(deps):
         with t as (
           select {dep_expr.format(c='COMMUNE')} as cur,
                  case when IRAN in ('0','1','2','3') then {dep_expr.format(c='COMMUNE')}
-                      when IRAN in ('4','5') then {dep_expr.format(c='DCRAN')}
+                      when IRAN in ('4','5','6') then {dep_expr.format(c='DCRAN')}
                       else null end as prev,
                  cast(SEXE as int) - 1 as sex,
                  least(cast(AGEREVQ as int), 95) as ag,
                  IPONDI as w
-          from '{f}' where METRODOM = 'M'
+          from '{f}'
         )
         select prev, cur, sex, ag, sum(w) from t where prev is not null group by 1,2,3,4
     """
@@ -399,8 +409,13 @@ def build_internal_migration(deps):
     stock = [[[0.0] * ng for _ in range(2)] for _ in range(n)]
     out = [[[0.0] * ng for _ in range(2)] for _ in range(n)]
     flows = [[[0.0] * n for _ in range(n)] for _ in DEST_GROUPS]
+    # Départements absents du recensement comme lieu de résidence (Mayotte) : on ne connaît que ceux
+    # qui en sont partis, pas ceux qui y sont restés. Leurs échanges sont exclus des migrations
+    # internes (sinon le taux de départ vaudrait 100 %) ; leur solde passe par le solde apparent.
+    residents = {cur for _, cur, _, _, _ in data}
+    excluded = sorted(c for c in codes if c not in residents)
     for prev, cur, sex, ag, w in data:
-        if prev not in idx or cur not in idx:
+        if prev not in idx or cur not in idx or prev not in residents:
             continue
         o, dd, g = idx[prev], idx[cur], ag // 5
         stock[o][sex][g] += w
@@ -429,13 +444,14 @@ def build_internal_migration(deps):
         "movers_between_departments_per_year": round(total_movers),
         "share_of_population": round(total_movers / total_stock, 4),
         "dest_share_kept_min": round(min(kept_share), 4),
+        "excluded_departments": excluded,
     }
     return {"ageGroupWidth": 5, "rate": rate, "destGroups": DEST_GROUPS, "dest": dest}, out, stock
 
 
 # ----------------------------------------------------------------------------- migrations extérieures
 
-def build_external_migration(deps, nat, mig_out, internal, metro_pop_2025):
+def build_external_migration(deps, nat, mig_out, internal):
     codes = [d["code"] for d in deps]
     idx = {c: i for i, c in enumerate(codes)}
     n = len(codes)
@@ -471,20 +487,17 @@ def build_external_migration(deps, nat, mig_out, internal, metro_pop_2025):
     f = (RAW / "RP2022_migcom.parquet").as_posix()
     con = duckdb.connect()
     inflow = dict(con.sql(f"""
-        select substr(COMMUNE,1,2) as dep, sum(IPONDI) from '{f}'
-        where METRODOM = 'M' and IRAN in ('6','7','8','9') group by 1
+        select case when substr(COMMUNE,1,2) = '97' then substr(COMMUNE,1,3) else substr(COMMUNE,1,2) end as dep, sum(IPONDI) from '{f}'
+        where IRAN in ('7','8','9') group by 1
     """).fetchall())
     tot_in = sum(inflow.get(c, 0) for c in codes)
     weights_inflow = [rnd(inflow.get(c, 0) / tot_in, 5) for c in codes]
     weights = weights_inflow if EXTERNAL_WEIGHTS == "inflow" else weights_residual
 
-    # Niveau national et profil par âge (projections 2026, France entière).
-    # Part de la métropole : part de sa population dans la France entière au 1/1/2025 (hypothèse).
+    # Niveau national et profil par âge (projections 2026, France entière = périmètre du moteur).
     nat_years = list(range(START_YEAR, END_YEAR + 1))
     last = max(y for y in nat["migH"][20] if nat["migH"][20][y] is not None)
-    fr_total = sum((nat["popH"][a].get(START_YEAR) or 0) + (nat["popF"][a].get(START_YEAR) or 0) for a in nat["popH"])
-    metro_share = metro_pop_2025 / fr_total
-    metro_share_used = metro_share
+    metro_share_used = 1.0
     profile, level = [], []
     for y in nat_years:
         yy = min(y, last)
@@ -498,8 +511,7 @@ def build_external_migration(deps, nat, mig_out, internal, metro_pop_2025):
     report["externalMigration"] = {
         "dep1_years": years,
         "method": EXTERNAL_WEIGHTS,
-        "metro_residual_external_per_year": round(total_res),
-        "metro_share_of_population_2025": round(metro_share, 4),
+        "residual_external_per_year": round(total_res),
         "level_2030": level[nat_years.index(2030)],
         "negative_weight_departments": [codes[i] for i in range(n) if residual[i] < 0],
     }
@@ -572,8 +584,7 @@ def main():
     mortality = build_mortality(deps, nat, {2023: pop2023, 2024: pop2024})
     fertility = build_fertility(deps, nat, pop2024)
     internal, mig_out, _ = build_internal_migration(deps)
-    metro_pop_2025 = sum(sum(sum(s) for s in d) for d in pop2025)
-    external = build_external_migration(deps, nat, mig_out, internal, metro_pop_2025)
+    external = build_external_migration(deps, nat, mig_out, internal)
     reference = build_reference(deps, nat, est2026)
 
     meta = {

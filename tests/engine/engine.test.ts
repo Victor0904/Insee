@@ -71,8 +71,8 @@ describe('agrégations', () => {
       expect(Math.abs(regs - fr) / fr).toBeLessThan(1e-9)
       expect(Math.abs(deps - fr) / fr).toBeLessThan(1e-9)
     }
-    expect(data.regions).toHaveLength(13)
-    expect(data.nDep).toBe(96)
+    expect(data.regions).toHaveLength(18) // 13 régions de métropole + 5 d'outre-mer
+    expect(data.nDep).toBe(101)
   })
 
   it('les indicateurs régionaux sont cohérents avec leurs départements', () => {

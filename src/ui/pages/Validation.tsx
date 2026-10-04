@@ -83,7 +83,7 @@ export function Validation({
 
   return (
     <>
-      <section className="kpis" aria-label="Scénario de référence, France métropolitaine">
+      <section className="kpis" aria-label="Scénario de référence, France">
         {[2025, 2050, 2070, 2100].map((y) => (
           <div key={y} className="kpi">
             <span className="kpi__year">{y}</span>
@@ -97,7 +97,7 @@ export function Validation({
         <div className="panel">
           <LineChart
             title="Population, base 100 en 2025"
-            summary={`Le moteur (métropole) passe de 100 en 2025 à ${index[2070 - data.startYear].toFixed(1)} en 2070. La projection Insee 2026 pour la France entière atteint ${offIndex[2070 - data.startYear].toFixed(1)}.`}
+            summary={`Le moteur passe de 100 en 2025 à ${index[2070 - data.startYear].toFixed(1)} en 2070. La projection Insee 2026 pour la France entière atteint ${offIndex[2070 - data.startYear].toFixed(1)}.`}
             years={years}
             series={[
               { id: 'moteur', label: 'Moteur', values: index, variant: 'solid' },
@@ -107,8 +107,7 @@ export function Validation({
             officialHorizon={officialHorizon}
           />
           <p className="note">
-            Moteur : France métropolitaine. Insee : France entière (avec les DROM, dont la croissance est plus rapide, ce
-            qui explique une partie de l’écart).
+            Moteur et Insee : France entière, outre-mer compris.
           </p>
         </div>
         <div className="panel">
@@ -161,7 +160,7 @@ export function Validation({
           </tbody>
         </table>
         <p className="note">
-          Simulation complète 2025-2100 (96 départements × 2 sexes × 101 âges) calculée en{' '}
+          Simulation complète 2025-2100 (101 départements × 2 sexes × 101 âges) calculée en{' '}
           <strong>{Math.round(baseline.elapsedMs)} ms</strong> dans le Web Worker.
         </p>
       </section>
