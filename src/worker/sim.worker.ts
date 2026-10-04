@@ -28,6 +28,13 @@ const api = {
     return Comlink.transfer(res, transferables(res))
   },
 
+  /** Simulation indépendante (mode Devine) : n'interfère pas avec la file des calculs affichés. */
+  runDetached(scenario: Scenario): SimResult {
+    if (!data) throw new Error('Données non chargées')
+    const res = simulate(data, scenario, catalogFor(scenario), { recordFlows: true })
+    return Comlink.transfer(res, transferables(res))
+  },
+
   /**
    * Contrefactuels pour « D'où vient cet écart ? » : pour chaque événement du joueur, totaux par
    * département et par année du scénario privé de cet événement (et donc de ses cascades).

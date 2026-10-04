@@ -9,19 +9,19 @@ import './LibraryPanel.css'
 
 type Filter = 'tous' | EventDef['family']
 
-export function LibraryPanel({ onCreate }: { onCreate: () => void }) {
+export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCreate: () => void; hidden?: string[]; compact?: boolean }) {
   const custom = useScenario((s) => s.scenario.custom)
   const setPlacing = useApp((s) => s.setPlacing)
   const [filter, setFilter] = useState<Filter>('tous')
-  const all = [...LIBRARY_VISIBLE, ...custom]
+  const all = [...LIBRARY_VISIBLE, ...custom].filter((e) => !hidden.includes(e.id))
   const families = (['tous', 'sante', 'climat', 'economie', 'politique', 'societe', 'imprevu', ...(custom.length ? ['perso'] : [])] as Filter[])
   const shown = filter === 'tous' ? all : all.filter((e) => e.family === filter)
 
   return (
-    <section className="library" aria-labelledby="library-title">
+    <section className={`library ${compact ? 'library--compact' : ''}`} aria-labelledby="library-title">
       <div className="library__head">
-        <h2 id="library-title" className="library__title">
-          Événements
+        <h2 id="library-title" className={compact ? 'library__title library__title--small' : 'library__title'}>
+          {compact ? 'Vos leviers' : 'Événements'}
         </h2>
         <p className="library__help">Glissez une carte sur un département ou sur la frise, ou choisissez « Placer ».</p>
       </div>

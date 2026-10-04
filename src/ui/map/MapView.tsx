@@ -1,7 +1,9 @@
 import { useId, useMemo, useState } from 'react'
 import { useApp, type LayerId } from '../../state/appStore'
+import { useGame } from '../../state/gameStore'
 import { Icon } from '../common/Icon'
 import { Term } from '../common/Term'
+import { ChallengePill } from '../game/ChallengePill'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { PALETTES, type Theme } from '../theme'
 import { FranceMap } from './FranceMap'
@@ -29,6 +31,7 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
   const setCompare = useApp((s) => s.setCompare)
   const [split, setSplit] = useState(50)
   const compareId = useId()
+  const mode = useGame((s) => s.mode)
 
   const layer = layerById(layerId)
   const matrix = useMemo(() => layerMatrix(data, baseline, result, layerId), [data, baseline, result, layerId])
@@ -75,6 +78,7 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
           <Icon name="flows" size={18} />
           Flux
         </button>
+        <ChallengePill />
         <label htmlFor={compareId} className="sr-only">
           Mode avant / après
         </label>
@@ -91,7 +95,7 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
           aria-controls="bibliotheque"
         >
           <Icon name="map" size={18} />
-          Événements
+          {mode === 'sandbox' ? 'Événements' : 'Jeu'}
         </button>
         <button
           type="button"

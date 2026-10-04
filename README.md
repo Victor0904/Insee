@@ -2,7 +2,7 @@
 
 Un jeu de simulation démographique de la France dans le navigateur. On déclenche des événements (pandémie, canicules, politique nataliste, exode urbain…) et on observe, année après année et département par département, comment la population s'écarte d'un scénario de référence fondé sur les données de l'Insee.
 
-> **État : jalon 4 — analyse.** Chaque chiffre s'explique (« D'où vient cet écart ? » : naissances, décès, migrations et part de chaque événement). Le panneau ajoute la pyramide des âges animée, les courbes, les 13 régions côte à côte et un mode avant / après sur la carte. Prochaine étape : modes de jeu et tutoriel (jalon 5).
+> **État : jalon 5 — modes de jeu.** Bac à sable, 9 défis notés, mode « Devine » (8 questions dont les réponses sont calculées par le moteur), 5 scénarios célèbres et un tutoriel interactif de 4 étapes. Prochaine étape : sauvegarde, partage et finitions (jalon 6).
 
 ## Installation
 

@@ -16,7 +16,7 @@ async function openPanel(page: Page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?tutoriel=0')
   await expect(page.locator('.map__dep')).toHaveCount(96)
   await placeDefault(page, 'Télétravail généralisé')
   await page.getByRole('slider', { name: 'Année affichée' }).fill('2050')

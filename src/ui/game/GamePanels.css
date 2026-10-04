@@ -1,0 +1,338 @@
+.game {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  min-height: 0;
+  height: 100%;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.game--active {
+  overflow-y: auto;
+}
+
+/* dans un défi, le panneau entier défile : la liste des leviers n'a pas sa propre barre */
+.game--active .library--compact {
+  flex: none;
+  height: auto;
+}
+
+.game--active .library--compact .library__list {
+  overflow: visible;
+  flex: none;
+}
+
+.game__title {
+  font-size: var(--fs-20);
+}
+
+.game__help {
+  margin: 0;
+  font-size: var(--fs-14);
+  color: var(--ink-muted);
+}
+
+.game__back {
+  align-self: flex-start;
+  min-height: 36px;
+  padding: 0;
+}
+
+.game__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.game-card {
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius-control);
+}
+
+.game-card.is-active {
+  border-color: var(--ink);
+}
+
+.game-card__title {
+  font-family: var(--font-body);
+  font-size: var(--fs-16);
+  font-weight: 600;
+}
+
+.game-card__text {
+  margin: 4px 0 0;
+  font-size: var(--fs-14);
+}
+
+.game-card__meta {
+  margin: 4px 0 0;
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+}
+
+.game-card__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.game-card__new {
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+}
+
+.stars {
+  display: inline-flex;
+  gap: 1px;
+  vertical-align: middle;
+}
+
+.star {
+  fill: none;
+  stroke: var(--ink-muted);
+  stroke-width: 1.5;
+}
+
+.star--on {
+  fill: var(--ink);
+  stroke: var(--ink);
+}
+
+.mission {
+  padding: var(--sp-3);
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-top: 3px solid var(--ink);
+  border-radius: var(--radius-control);
+}
+
+.mission__kicker {
+  margin: 0;
+  font-size: var(--fs-12);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.mission__goal {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-14);
+}
+
+.mission__status {
+  margin-top: var(--sp-3);
+  font-size: var(--fs-14);
+}
+
+.mission__measure {
+  margin: 0;
+}
+
+.meter {
+  height: 8px;
+  margin: var(--sp-2) 0;
+  background: var(--surface-2);
+  border: 1px solid var(--control);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transition: width var(--dur-in) var(--ease-in);
+}
+
+.mission__status.is-success .meter__fill {
+  background: var(--gain);
+}
+
+.mission__rules {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 2px;
+  font-size: var(--fs-12);
+}
+
+.mission__rules li::before {
+  display: inline-block;
+  width: 1.3em;
+  font-weight: 700;
+}
+
+.mission__rules .ok::before {
+  content: '✓';
+  color: var(--gain);
+}
+
+.mission__rules .ko::before {
+  content: '✗';
+  color: var(--loss);
+}
+
+.mission__win {
+  margin: var(--sp-2) 0 0;
+  padding: var(--sp-2);
+  background: var(--gain-soft);
+  color: var(--ink);
+  border-radius: var(--radius-control);
+}
+
+.mission__how {
+  display: block;
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+}
+
+.mission__hint {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+.guess__event {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-3);
+  align-items: center;
+  padding: var(--sp-3);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}
+
+.guess__event p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.guess__q {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.guess__question {
+  padding: 0;
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-display);
+  font-size: var(--fs-20);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.guess__choices {
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.choice {
+  min-height: 44px;
+  padding: var(--sp-2) var(--sp-3);
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+  font-weight: 600;
+}
+
+.choice:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.choice:disabled {
+  cursor: default;
+}
+
+.choice--right {
+  background: var(--gain-soft);
+  border-color: var(--gain);
+}
+
+.choice--wrong {
+  background: var(--loss-soft);
+  border-color: var(--loss);
+  text-decoration: line-through;
+}
+
+.choice__tag {
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.guess__reveal {
+  padding: var(--sp-3);
+  border-radius: var(--radius-control);
+  border: 1px solid var(--rule);
+  font-size: var(--fs-14);
+}
+
+.guess__reveal p {
+  margin: 0 0 var(--sp-2);
+}
+
+.guess__story {
+  font-style: italic;
+}
+
+.toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: 140px;
+  transform: translateX(-50%);
+  z-index: 300;
+  pointer-events: none;
+}
+
+.toast {
+  margin: 0;
+  max-width: min(520px, 90vw);
+  padding: var(--sp-3) var(--sp-4);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow);
+  font-size: var(--fs-14);
+  font-weight: 600;
+  animation: toast-in var(--dur-in) var(--ease-in);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: var(--fs-14);
+  font-weight: 600;
+  background: var(--surface);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+}
+
+.pill--ok {
+  background: var(--gain-soft);
+  border-color: var(--gain);
+}
+
+.pill__target {
+  font-weight: 400;
+  color: var(--ink-muted);
+}

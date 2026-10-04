@@ -2,6 +2,8 @@ import type { EventDef, Zone } from '../engine/types'
 import { catalogFor } from '../events/catalog'
 import { useApp } from './appStore'
 import { useScenario } from './scenarioStore'
+import { useGame } from './gameStore'
+import { challengeById } from '../game/challenges'
 
 export const currentCatalog = () => catalogFor(useScenario.getState().scenario)
 export const eventDef = (type: string): EventDef | undefined => currentCatalog().get(type)
@@ -15,6 +17,20 @@ export function placeEvent(type: string, opts: { zone?: Zone; start?: number } =
   const def = eventDef(type)
   const app = useApp.getState()
   if (!def || !app.data) return null
+  const game = useGame.getState()
+  const ch = game.mode === 'challenges' && game.challengeId ? challengeById(game.challengeId) : undefined
+  if (ch) {
+    if (ch.forbidden?.includes(type)) {
+      game.say(`« ${def.name} » est interdit dans ce défi.`)
+      useApp.setState({ placing: null })
+      return null
+    }
+    if (useScenario.getState().scenario.events.length >= ch.maxEvents) {
+      game.say(`Ce défi autorise ${ch.maxEvents} événements au plus : retirez-en un avant d’en ajouter un autre.`)
+      useApp.setState({ placing: null })
+      return null
+    }
+  }
   const start = Math.min(opts.start ?? app.year, app.data.endYear - 1)
   const uid = useScenario.getState().addEvent(def, { start, zone: opts.zone })
   useApp.setState({

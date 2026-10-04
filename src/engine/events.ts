@@ -65,7 +65,7 @@ export interface YearModifiers {
   attract: Float64Array // bg*n + d
   anyAttract: boolean
   moves: { from: number[]; to: number[]; rate: Float64Array }[]
-  extAdd: { deps: number[]; perYear: number; ages: AgeRange }[]
+  extAdd: { deps: number[]; rate: number; ages: AgeRange }[]
   extMult: number
   retirementAge: number
 }
@@ -163,7 +163,7 @@ export function fillModifiers(data: ModelData, m: YearModifiers, events: Compile
           break
         }
         case 'external':
-          m.extAdd.push({ deps, perYear: eff.perYear * e, ages: [lo, hi] })
+          m.extAdd.push({ deps, rate: eff.rate * e, ages: [lo, hi] })
           break
         case 'externalMult':
           m.extMult *= Math.max(0, 1 + (eff.mult - 1) * e)

@@ -5,6 +5,13 @@ import { startRunner } from '../../state/runner'
 import { useScenario } from '../../state/scenarioStore'
 import { Icon } from '../common/Icon'
 import { WhyDialog } from '../analysis/WhyDialog'
+import { ChallengePanel } from '../game/ChallengePanel'
+import { GuessPanel } from '../game/GuessPanel'
+import { ModeBar } from '../game/ModeBar'
+import { PresetsPanel } from '../game/PresetsPanel'
+import { Toast } from '../game/Toast'
+import { maybeStartTutorial, Tutorial, useTutorial } from '../tutorial/Tutorial'
+import { useGame } from '../../state/gameStore'
 import { DragGhost } from '../dnd/DragGhost'
 import { EventInspector } from '../inspector/EventInspector'
 import { CustomEventDialog } from '../library/CustomEventDialog'
@@ -68,9 +75,11 @@ export function AppShell() {
   const closeRef = useRef<HTMLButtonElement>(null)
   const libCloseRef = useRef<HTMLButtonElement>(null)
   const [creating, setCreating] = useState(false)
+  const mode = useGame((s) => s.mode)
 
   useEffect(() => {
     startRunner()
+    maybeStartTutorial()
     return installShortcuts()
   }, [])
   const closePanel = useMemo(() => () => setPanelOpen(false), [setPanelOpen])
@@ -88,11 +97,16 @@ export function AppShell() {
           <span className="brand__mark">Et si… ?</span>
           <span className="brand__sub">la France de 2025 à 2100</span>
         </a>
+        <ModeBar />
         <nav className="topbar__nav" aria-label="Outils">
           <span className="topbar__status" role="status" aria-live="polite">
             {computing ? 'Calcul…' : ''}
           </span>
           <HistoryMenu />
+          <button type="button" className="topbar__link" onClick={() => useTutorial.getState().start()} aria-label="Revoir la prise en main">
+            <Icon name="info" size={18} />
+            <span>Aide</span>
+          </button>
           <a href="#/comment-ca-marche" className="topbar__link" aria-label="Comment ça marche">
             <Icon name="book" size={18} />
             <span>Comment ça marche</span>
@@ -102,17 +116,24 @@ export function AppShell() {
       </header>
 
       <main className="stage" id="carte" tabIndex={-1}>
-        <aside id="bibliotheque" className={`stage__library ${libraryOpen ? 'is-open' : ''}`} aria-label="Bibliothèque d’événements">
+        <aside
+          id="bibliotheque"
+          className={`stage__library ${libraryOpen ? 'is-open' : ''}`}
+          aria-label={mode === 'sandbox' ? 'Bibliothèque d’événements' : mode === 'challenges' ? 'Défis' : mode === 'guess' ? 'Devine' : 'Scénarios célèbres'}
+        >
           <button ref={libCloseRef} type="button" className="icon-btn stage__close" onClick={closeLibrary} aria-label="Fermer la bibliothèque">
             <Icon name="close" />
           </button>
-          <LibraryPanel onCreate={() => setCreating(true)} />
+          {mode === 'sandbox' && <LibraryPanel onCreate={() => setCreating(true)} />}
+          {mode === 'challenges' && <ChallengePanel onCreate={() => setCreating(true)} />}
+          {mode === 'guess' && <GuessPanel />}
+          {mode === 'presets' && <PresetsPanel />}
         </aside>
         <div className="stage__map">
           <MapView geom={geom} theme={theme} />
           <PlacementBar />
           <EventInspector />
-          {!hasEvents && !placing && (
+          {!hasEvents && !placing && mode === 'sandbox' && (
             <p className="stage__hint">
               <span className="stage__hint-wide">Glissez un événement sur la carte pour commencer.</span>
               <button type="button" className="btn-primary stage__hint-narrow" onClick={() => setLibraryOpen(true)} aria-controls="bibliotheque">
@@ -143,6 +164,8 @@ export function AppShell() {
       <DragGhost />
       <CustomEventDialog open={creating} onClose={() => setCreating(false)} />
       <WhyDialog />
+      <Toast />
+      <Tutorial />
     </div>
   )
 }

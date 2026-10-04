@@ -257,13 +257,12 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
       comps[compBase + d * N_COMP + COMP_EXT] = added
     }
     for (const ex of mods.extAdd) {
-      let tot = 0
-      for (const d of ex.deps) tot += depTotal[d]
       let prof = 0
       for (let s = 0; s < SEXES; s++) for (let a = ex.ages[0]; a <= ex.ages[1]; a++) prof += data.extProfile[pBase + s * AGES + a]
-      if (tot <= 0 || prof <= 0) continue
+      if (prof <= 0) continue
       for (const d of ex.deps) {
-        const share = (ex.perYear * depTotal[d]) / tot
+        // taux appliqué à la population du département : même intensité quelle que soit la taille de la zone
+        const share = ex.rate * depTotal[d]
         for (let s = 0; s < SEXES; s++)
           for (let a = ex.ages[0]; a <= ex.ages[1]; a++)
             next[d * cell + s * AGES + a] += (share * data.extProfile[pBase + s * AGES + a]) / prof

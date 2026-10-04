@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import type { AgeRange, Effect, EventDef, Zone } from '../../engine/types'
 import { zoneKey } from '../../engine/zones'
 import { NAMED_ZONES } from '../../events/zones'
-import { fmtInt, fmtSigned } from '../../lib/format'
+import { fmtDec1, fmtSigned } from '../../lib/format'
 import { useApp } from '../../state/appStore'
 import { newUid, useScenario } from '../../state/scenarioStore'
 import './CustomEventDialog.css'
@@ -22,7 +22,7 @@ interface Form {
   deaths: number // %
   moveTo: string // zoneKey ou ''
   moveRate: number // % par an
-  abroad: number // personnes par an
+  abroad: number // % de la population par an
   duration: number
 }
 
@@ -36,12 +36,12 @@ export function buildCustomEvent(f: Form, destinations: { key: string; zone: Zon
   if (f.deaths) effects.push({ kind: 'mortality', mult: 1 + f.deaths / 100, ages: who.ages })
   const dest = destinations.find((d) => d.key === f.moveTo)
   if (dest && f.moveRate > 0) effects.push({ kind: 'move', to: dest.zone, rate: f.moveRate / 100, ages: who.ages })
-  if (f.abroad) effects.push({ kind: 'external', perYear: f.abroad, ages: who.ages })
+  if (f.abroad) effects.push({ kind: 'external', rate: f.abroad / 100, ages: who.ages })
   const parts = [
     f.births ? `${fmtSigned(f.births)} % de naissances` : '',
     f.deaths ? `${fmtSigned(f.deaths)} % de décès (${who.label.toLowerCase()})` : '',
     dest && f.moveRate > 0 ? `${String(f.moveRate).replace('.', ',')} % des habitants partent chaque année vers : ${dest.label}` : '',
-    f.abroad ? `${fmtSigned(f.abroad)} arrivées de l’étranger par an` : '',
+    f.abroad ? `arrivées de l’étranger : ${fmtSigned(f.abroad, fmtDec1)} % d’habitants par an` : '',
   ].filter(Boolean)
   return {
     id: `perso-${newUid()}`,
@@ -153,9 +153,10 @@ export function CustomEventDialog({ open, onClose }: { open: boolean; onClose: (
         </div>
         <label className="field">
           <span className="field__label">
-            Arrivées de l’étranger en plus : <strong>{f.abroad === 0 ? 'aucune' : `${fmtSigned(f.abroad)} par an`}</strong>
+            Arrivées de l’étranger en plus : <strong>{f.abroad === 0 ? 'aucune' : `${fmtSigned(f.abroad, fmtDec1)} % d’habitants par an`}</strong>
           </span>
-          <input type="range" min={-100000} max={200000} step={10000} value={f.abroad} onChange={(e) => set('abroad', Number(e.target.value))} aria-valuetext={`${fmtInt(f.abroad)} par an`} />
+          <input type="range" min={-0.5} max={1} step={0.1} value={f.abroad} onChange={(e) => set('abroad', Number(e.target.value))} aria-valuetext={`${fmtDec1(f.abroad)} % par an`} />
+          <span className="field__hint">Pour toute la France, 0,2 % par an représente environ 130 000 personnes.</span>
         </label>
         <label className="field">
           <span className="field__label">

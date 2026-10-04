@@ -150,8 +150,8 @@ export type Effect =
   | { kind: 'attract'; mult: number; ages?: AgeRange }
   /** Déménagements de la zone vers une autre zone (fraction de la population par an). */
   | { kind: 'move'; to: Zone; rate: number; ages?: AgeRange }
-  /** Solde migratoire extérieur supplémentaire (personnes par an, réparti dans la zone au prorata). */
-  | { kind: 'external'; perYear: number; ages?: AgeRange }
+  /** Solde migratoire extérieur supplémentaire, en fraction de la population de la zone par an. */
+  | { kind: 'external'; rate: number; ages?: AgeRange }
   /** Multiplicateur du solde migratoire extérieur national. */
   | { kind: 'externalMult'; mult: number }
   /** Âge de départ à la retraite (indicateur « pression retraites » ; aucun effet sur la population). */

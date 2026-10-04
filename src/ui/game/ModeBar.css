@@ -1,0 +1,42 @@
+.modes {
+  display: flex;
+  align-items: center;
+}
+
+.modes__buttons {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface-2);
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+}
+
+.mode {
+  min-height: 34px;
+  padding: 0 14px;
+  font-size: var(--fs-14);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.mode[aria-current='page'] {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: 600;
+}
+
+.modes__select {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .modes__buttons {
+    display: none;
+  }
+  .modes__select {
+    display: block;
+  }
+}

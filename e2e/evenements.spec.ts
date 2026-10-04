@@ -16,7 +16,7 @@ async function placeWithKeyboard(page: Page, name: string) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?tutoriel=0')
   await expect(page.locator('.map__dep')).toHaveCount(96)
 })
 

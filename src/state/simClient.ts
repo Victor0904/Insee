@@ -33,3 +33,6 @@ export function computeContributions(scenario: Scenario) {
   }
   return p
 }
+
+/** Simulation indépendante de la file d'affichage (mode Devine). */
+export const simulateDetached = (scenario: Scenario): Promise<SimResult> => worker().runDetached(scenario)

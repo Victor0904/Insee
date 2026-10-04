@@ -1,0 +1,85 @@
+.coach {
+  position: fixed;
+  left: 50%;
+  bottom: 150px;
+  transform: translateX(-50%);
+  z-index: 150;
+  width: min(420px, calc(100vw - 24px));
+  padding: var(--sp-4);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-panel);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.3);
+  animation: coach-in var(--dur-in) var(--ease-in);
+}
+
+@keyframes coach-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+.coach__step {
+  margin: 0;
+  font-size: var(--fs-12);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.coach__title {
+  margin-top: 4px;
+  font-size: var(--fs-20);
+  color: var(--paper);
+}
+
+.coach__body {
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-14);
+}
+
+.coach__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
+
+.coach .btn-ghost {
+  color: var(--paper);
+  min-height: 40px;
+}
+
+.coach .btn-primary {
+  background: var(--paper);
+  color: var(--ink);
+  border-color: var(--paper);
+  margin-left: auto;
+}
+
+.coach__skip {
+  margin-left: auto;
+}
+
+.coach-target {
+  position: relative;
+  z-index: 5;
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  border-radius: var(--radius-control);
+  animation: coach-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes coach-pulse {
+  50% {
+    outline-offset: 7px;
+  }
+}
+
+@media (max-width: 720px) {
+  .coach {
+    bottom: auto;
+    top: 64px;
+  }
+}

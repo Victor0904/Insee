@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
 test.beforeEach(async ({ page }) => {
-  await page.goto('/')
+  await page.goto('/?tutoriel=0')
   await expect(page.locator('.map__dep')).toHaveCount(96)
 })
 

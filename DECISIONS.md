@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 4 (4 octobre 2026).
+Dernière mise à jour : jalon 5 (4 octobre 2026).
 
 ---
 
@@ -220,3 +220,71 @@ Pour un indicateur autre que la population (âge médian, seniors pour 100 actif
 | Petits multiples | 13 régions, **même échelle** pour toutes (évolution depuis 2025), écart en points ; un clic affiche la région |
 | Avant / après | Deux cartes superposées, la seconde découpée par un séparateur (`clip-path`) réglable à la souris ou au clavier (curseur natif). On compare référence et scénario à la même année, ou 2025 et l'année affichée. La carte d'arrière-plan est décorative (ni focus ni annonce) |
 | Onglets | Motif ARIA « tabs » : flèches, Début, Fin |
+
+## 11. Modes de jeu et prise en main — jalon 5
+
+### Correction du modèle : arrivées de l'étranger proportionnelles
+
+L'effet `external` était un nombre absolu de personnes par an. Posé sur un petit département, il devenait absurde : « Ouverture migratoire » sur la seule Creuse lui ajoutait 150 000 personnes par an, soit 7 millions d'habitants en 2100.
+
+Il est désormais exprimé en **fraction de la population de la zone par an** :
+- « Ouverture migratoire » : 0,23 % par an, soit environ 150 000 personnes pour la France entière ;
+- « Boom technologique » : 0,2 % ;
+- « Relocalisation » : 0,1 %.
+
+L'éditeur personnalisé propose de −0,5 % à +1 % par an.
+
+### Défis (`src/game/challenges.ts`)
+
+9 défis, chacun avec un objectif chiffré, une année, un nombre maximal d'événements, d'éventuels événements interdits ou imposés, et un indice. L'exemple de la mission, « plus de 1,5 actif par senior en 2070 », est **déjà atteint par la référence** (1,59) : l'objectif a été relevé à **1,7**.
+
+**Chaque défi porte une solution connue.** Un test vérifie que la référence échoue et que la solution réussit :
+
+| Défi | Référence | Solution testée | Cible |
+|---|---|---|---|
+| Des bras pour les retraites | 1,59 actif par senior | 1,75 | ≥ 1,7 |
+| Sauver la Creuse | 79 437 hab. (2100) | 151 337 | ≥ 100 000 |
+| Repeupler la diagonale du vide (sans exode urbain) | 3,7 M (2060) | 4,6 M | ≥ niveau 2025 |
+| Pas de déclin | 55,8 M (2100) | 72,4 M | ≥ 66 M |
+| Des enfants dans les écoles | 4,6 M (2050) | 5,7 M | ≥ 5 M |
+| Desserrer l’Île-de-France | 12,5 M (2050) | 11,2 M | ≤ 12 M, sans perte nationale |
+| Des retraites tenables (2 événements) | 67,2 (2070) | 52,2 | ≤ 54 |
+| Rajeunir la France | 52,1 ans (2070) | 49,4 ans | ≤ 50,5 ans |
+| Résister à la pandémie (imposée) | — | 71,5 M (2040) | ≥ référence |
+
+**Score sur 1 000 :** 600 pour la réussite, + 150 par événement non utilisé, + jusqu'à 250 selon la marge. Les étoiles valent 1 à 3 selon la sobriété et la marge. Les contraintes sont appliquées au moment de poser un événement : un message explique le refus. Le meilleur score est mémorisé localement.
+
+### Devine (`src/game/quiz.ts`)
+
+8 questions. **Les bonnes réponses sont calculées par la simulation**, jamais écrites à la main :
+- « Quelle région gagne le plus ? » : 4 régions proposées, la bonne et 3 tirées avec une graine fixe ;
+- « Plus, moins ou autant ? » : « autant » si l'écart est inférieur à 0,1 %.
+
+Le calcul se fait dans le Worker, à part de la file d'affichage, pour ne rien révéler sur la carte avant la réponse. Après la réponse, la carte montre l'effet à l'année de la question, avec la phrase du récit.
+
+Exemples de réponses calculées :
+- Télétravail → Pays de la Loire (+ 3,8 %) ;
+- Retraite à 67 ans → « autant » (question piège : la population ne change pas) ;
+- Montée des eaux → Bretagne.
+
+### Scénarios célèbres (`src/game/presets.ts`)
+
+| Scénario | Contenu |
+|---|---|
+| Baby-boom rejoué | Fécondité × 1,4 de 2026 à 2045. Le baby-boom avait fait passer l'ICF d'environ 2,1 à près de 3 : la hausse relative est transposée, c'est une hypothèse de jeu |
+| Canicule de 2003, tous les 5 ans | 15 canicules |
+| France 2100 à +4 °C | Scénario fictif, inspiré de la trajectoire de réchauffement de référence pour l'adaptation |
+| Tous au vert | — |
+| Terre d’accueil | — |
+
+Charger un scénario est une action annulable (Ctrl+Z).
+
+### Tutoriel
+
+4 étapes, **faites par le joueur** :
+1. lancer le temps ;
+2. poser « Télétravail généralisé » ;
+3. avancer jusqu'en 2050 ;
+4. cliquer sur l'écart.
+
+L'élément à utiliser est mis en évidence, avec « Retour » et « Passer » toujours disponibles (règle « User Freedom » du skill ui-ux-pro-max). Le tutoriel démarre à la première visite, et le bouton « Aide » le relance. Le paramètre `?tutoriel=0` le désactive ; les tests l'utilisent.
