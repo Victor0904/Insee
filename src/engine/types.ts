@@ -65,7 +65,7 @@ export interface InternalMigrationJson {
 
 export interface ExternalMigrationJson {
   years: number[]
-  level: number[] // solde annuel métropole (personnes)
+  level: number[] // solde annuel France entière (personnes)
   profile: number[][][] // [annee][sexe][âge] somme = 1
   depWeight: number[]
   apparentNet: number[]

@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 6 (4 octobre 2026).
+Dernière mise à jour : améliorations après le jalon 6 (4 octobre 2026).
 
 ---
 
@@ -313,9 +313,52 @@ L'élément à utiliser est mis en évidence, avec « Retour » et « Passer » 
 
 La cible de « moins de 100 ms perçues » est **approchée mais pas toujours tenue** : le calcul complet reste de l'ordre de 70 à 120 ms. Les transitions de la carte (180 ms) lissent la mise à jour.
 
-### Limites restantes
 
-- L'historique détaillé (liste des actions) n'est proposé qu'au-dessus de 600 px ; sur téléphone, le menu offre annuler et rétablir.
-- Le glisser-déposer des cartes de la bibliothèque est pensé pour la souris et le stylet ; au doigt, on utilise « Placer », plus fiable sur petit écran.
-- Les départements et régions d'outre-mer ne sont pas simulés (jalon optionnel).
-- La CI GitHub Actions est fournie (`.github/workflows/ci.yml`) mais n'a pas pu être exécutée : le dépôt n'a pas de dépôt distant.
+## 13. Améliorations après le jalon 6
+
+### Outre-mer (périmètre : France entière)
+
+Les 5 départements et régions d'outre-mer sont simulés : 101 départements, 18 régions.
+- **Données :** estimations Insee, naissances, décès et espérance de vie, migrations du recensement 2022, Omphale.
+- **Migrations :** les déménagements entre la métropole et les DROM sont internes. Mayotte n'est pas dans le fichier national des migrations comme lieu de résidence ; ses échanges internes sont exclus (sinon son taux de départ vaudrait 100 %), et son solde passe par le solde apparent.
+- **Validation à périmètre identique** avec les projections Insee 2026 :
+  - écart maximal sur l'évolution de la population : **0,32 point**, au lieu de 1,06 quand seule la métropole était simulée ;
+  - part des 65 ans et plus : **0,14 point** au plus ;
+  - projection à un an : 0,13 % d'écart moyen par département (au plus 0,51 %, en Martinique).
+- **Carte :** médaillons en rangée en haut, chacun avec sa projection. Les contours IGN sont simplifiés à la construction (topojson-simplify, 4 % des sommets, 56 Ko).
+- **Écarts à Omphale 2022 :** ils sont plus forts pour la Guyane et la Guadeloupe (jusqu'à 38 % sur la part de population en 2070). Omphale part de 2018 et suppose une fécondité de 1,8.
+
+### Niveau de preuve des événements
+
+| Niveau | Événements | Vérification |
+|---|---|---|
+| **Variante Insee** | Fécondité haute (1,70) et basse (1,20), espérance de vie haute et basse, migrations hautes (+230 000) et basses (+70 000), solde nul | Écart du moteur au scénario central comparé à celui de l'Insee, de 2030 à 2070 : à moins de 10 % (ex. fécondité haute en 2070 : +5,08 M contre +4,95 M) |
+| **Calé sur l'histoire** | Pandémie (intensité forte = 2020), canicule (intensité forte = 2003) | +9,4 % de décès (2020 : +9 %) ; +2,8 % (2003 : +2,7 %) |
+| **Hypothèse de jeu** | Les autres | Aucune : affiché comme tel sur chaque carte et chaque fiche |
+
+Les variantes migratoires de l'Insee divergent du scénario central dès 2023 : on compare l'écart **accumulé depuis 2025**, année de départ du moteur. Les multiplicateurs de fécondité et de migration sont les rapports nominaux des hypothèses (1,70 / 1,45…). Ceux d'espérance de vie sont ajustés par simulation (×0,76 en 30 ans ; ×1,365 d'ici 2070).
+
+### Réactivité
+
+| Mesure (build de production, Chrome, Ryzen 7 3700X) | Avant | Après |
+|---|---|---|
+| Simulation complète | ≈ 78 ms | ≈ 61 ms (médiane dans le Worker) |
+| Réglage → chiffres affichés, médiane | 86-122 ms | **80 ms** |
+| Part des réglages affichés en moins de 100 ms | — | **92 %** (90e centile : 98 ms) |
+
+Les leviers :
+1. **Déménagements ciblés** cumulés puis répartis une seule fois ; une division remplacée par une multiplication.
+2. **Reprise exacte à l'année du premier événement** : les états de la référence sont gardés en double précision dans le Worker. Le résultat est identique au bit près (testé) ; un événement en 2070 se calcule en 29 ms au lieu de 65.
+3. **Recyclage des tableaux de résultats** (~9 Mo) entre la page et le Worker.
+4. **Échauffement du Worker** avec un scénario qui exerce tous les types d'effets. Sans lui, la première simulation après l'apparition d'un nouveau type d'effet coûtait ~150 ms (désoptimisation du code par le moteur JavaScript).
+
+Il reste de rares pointes (au plus ~150 ms).
+
+### Téléphone
+
+- L'historique détaillé des actions est dans le menu des outils.
+- Les cartes d'événements ont une **poignée tactile** (`touch-action: none`) : on les glisse au doigt sur un département ou sur la frise, et le reste de la carte fait défiler la liste. C'est testé par de vrais événements tactiles (CDP `Input.dispatchTouchEvent`).
+
+### CI
+
+Le workflow `.github/workflows/ci.yml` a été rejoué à l'identique dans un clone vierge du dépôt : `npm ci`, typecheck, lint, 56 tests Vitest, build, 61 parcours Playwright avec `CI=1`. Tout passe.

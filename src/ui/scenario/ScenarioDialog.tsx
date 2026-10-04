@@ -80,7 +80,7 @@ export function ScenarioDialog({ open, onClose }: { open: boolean; onClose: () =
         colors: mapLegend.colors,
         labels: mapLegend.labels,
         hatchedClasses: mapLegend.hatched,
-        source: 'Simulation « Et si… ? » à partir des données Insee (Licence Ouverte). Effets des événements : hypothèses de jeu.',
+        source: 'Simulation « Et si… ? » à partir des données Insee (Licence Ouverte). Effets des événements : variantes Insee, épisodes historiques ou hypothèses de jeu (voir chaque fiche).',
       })
       download(`et-si-${slug(scenario.name)}-${year}.png`, blob)
     } catch (e) {

@@ -6,8 +6,8 @@ import { CAPITALES_REGIONALES, DIAGONALE, FRANCE, IDF, INDUSTRIEL, LITTORAL, MET
  *
  * Les effets sont donnés pour une intensité de 1 (« forte ») ; l'intensité choisie par le joueur
  * les met à l'échelle (0,5 = moitié de l'écart). Les âges sont les âges au 1er janvier.
- * Toutes les valeurs sont des hypothèses de jeu (`estimated: true`) : quand un ordre de grandeur
- * historique existe, il est cité dans `source`.
+ * Niveau de preuve (`evidence`) : « insee » pour les variantes officielles, « historique » pour les
+ * effets calés sur un épisode réel (cité dans `source`), sinon hypothèse de jeu.
  */
 
 /**

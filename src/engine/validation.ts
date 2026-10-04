@@ -10,7 +10,7 @@ export interface ValidationReport {
   maxSeniorGapPts: number
   /** Projection à 1 an comparée à l'estimation Insee au 1/1/2026, par département. */
   oneYear: { meanAbsPct: number; maxAbsPct: number; worst: string }
-  /** Parts des départements dans la population métropolitaine, comparées à Omphale 2022. */
+  /** Parts des départements dans la population de la France entière, comparées à Omphale 2022. */
   omphale: { year: number; meanAbsPct: number; maxAbsPct: number; worst: string }[]
 }
 

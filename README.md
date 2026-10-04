@@ -35,9 +35,9 @@ python -m venv .venv-data
 
 ## Ce qu'on peut faire
 
-- **Carte de France** par département, avec 6 couches (écart à la référence, évolution, âge médian, seniors pour 100 actifs, arrivées moins départs, densité) et les déménagements animés.
+- **Carte de France** des 101 départements, outre-mer en médaillons, avec 6 couches (écart à la référence, évolution, âge médian, seniors pour 100 actifs, arrivées moins départs, densité) et les déménagements animés.
 - **Frise 2025-2100** : lecture, pause, vitesse ; les événements y sont des blocs qu'on déplace et qu'on allonge.
-- **25 événements** et un éditeur pour créer les siens, avec des **cascades** visibles (canicules → crise agricole → migration vers le nord → logement).
+- **32 événements** et un éditeur pour créer les siens, avec des **cascades** visibles (canicules → crise agricole → migration vers le nord → logement). Chacun affiche son **niveau de preuve** : 7 reproduisent des variantes officielles de l'Insee, 2 sont calés sur l'histoire (2020, 2003), les autres sont des hypothèses de jeu.
 - **Analyse** :
   - récit automatique ;
   - « D'où vient cet écart ? » : naissances, décès, migrations et part de chaque événement ;
@@ -75,7 +75,7 @@ Chaque année, pour chaque département, chaque sexe et chaque âge :
 3. des habitants déménagent vers d'autres départements, comme on l'observe au recensement ;
 4. des personnes arrivent de l'étranger ou partent.
 
-C'est la **méthode des composantes**, celle des démographes. Sans événement, le moteur suit les projections 2026 de l'Insee, et les écarts sont mesurés et testés. Les effets des événements sont des **hypothèses de jeu**, signalées comme telles. Tout est détaillé dans la page « Comment ça marche » de l'application, dans [DECISIONS.md](DECISIONS.md) (hypothèses, choix, limites) et dans [DATA_SOURCES.md](DATA_SOURCES.md) (sources et dates).
+C'est la **méthode des composantes**, celle des démographes. Sans événement, le moteur suit les projections 2026 de l'Insee, et les écarts sont mesurés et testés. Les événements « Variante Insee » reproduisent les variantes officielles des projections (écart vérifié par des tests) ; les autres effets sont signalés comme calés sur l'histoire ou comme hypothèses de jeu. Tout est détaillé dans la page « Comment ça marche » de l'application, dans [DECISIONS.md](DECISIONS.md) (hypothèses, choix, limites) et dans [DATA_SOURCES.md](DATA_SOURCES.md) (sources et dates).
 
 ## Structure
 
