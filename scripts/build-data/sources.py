@@ -76,6 +76,27 @@ SOURCES = [
         "date": "2026-06-08",
         "use": "Hypothèses nationales du scénario de référence (fécondité, solde migratoire) et validation",
     },
+    *[
+        {
+            "id": f"proj2026_{code}",
+            "file": f"proj2026_{code}.xlsx",
+            "url": f"{INSEE}/{page}/{code}.xlsx",
+            "page": f"https://www.insee.fr/fr/statistiques/{page}?sommaire=8991068",
+            "title": f"Projections de population 2026 - variante « {label} »",
+            "producer": "Insee, projections de population 2026",
+            "date": "2026-06-08",
+            "use": "Calage et validation des événements « variantes officielles »",
+        }
+        for code, page, label in [
+            ("11_fec_haute", "8990856", "fécondité haute"),
+            ("12_fec_basse", "8990856", "fécondité basse"),
+            ("13_ev_haute", "8990856", "espérance de vie haute"),
+            ("14_ev_basse", "8990856", "espérance de vie basse"),
+            ("15_smi_haut", "8990856", "solde migratoire haut"),
+            ("16_smi_bas", "8990856", "solde migratoire bas"),
+            ("53_smi_nul", "8990868", "solde migratoire nul"),
+        ]
+    ],
     {
         "id": "proj2026_mort",
         "file": "proj2026_hyp_mortalite.xlsx",

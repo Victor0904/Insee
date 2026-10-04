@@ -83,6 +83,7 @@ export interface ReferenceJson {
     share65plus: number[]
   }
   omphale: { source: string; years: number[]; pop: number[][] }
+  variants?: { source: string; years: number[]; total: Record<string, number[]> }
   estimate2026: { source: string; pop: number[] }
 }
 
@@ -172,7 +173,15 @@ export interface CascadeRule {
   because: string
 }
 
-export type EventFamily = 'sante' | 'climat' | 'economie' | 'politique' | 'societe' | 'imprevu' | 'perso'
+export type EventFamily = 'insee' | 'sante' | 'climat' | 'economie' | 'politique' | 'societe' | 'imprevu' | 'perso'
+
+/**
+ * Niveau de preuve des effets d'un événement :
+ * - insee : reproduit une variante officielle des projections Insee 2026 (vérifié par un test) ;
+ * - historique : calé sur l'ampleur d'un épisode réel (vérifié par un test) ;
+ * - hypothese : hypothèse de jeu, plausible mais non calée.
+ */
+export type Evidence = 'insee' | 'historique' | 'hypothese'
 
 export interface EventDef {
   id: string
@@ -191,6 +200,12 @@ export interface EventDef {
   estimated: true
   /** Événement qui n'apparaît qu'en conséquence d'un autre (cascade), pas dans la bibliothèque. */
   cascadeOnly?: boolean
+  /** Niveau de preuve (« hypothese » si absent). */
+  evidence?: Evidence
+  /** Variante Insee reproduite (code du fichier), si evidence = 'insee'. */
+  inseeVariant?: string
+  /** Année de départ proposée par défaut (celle de la variante officielle). */
+  officialStart?: number
 }
 
 export interface ScenarioEvent {

@@ -31,7 +31,8 @@ export function placeEvent(type: string, opts: { zone?: Zone; start?: number } =
       return null
     }
   }
-  const start = Math.min(opts.start ?? app.year, app.data.endYear - 1)
+  // une variante officielle se pose par défaut à son année de départ (sauf dépôt sur la frise)
+  const start = Math.min(opts.start ?? def.officialStart ?? app.year, app.data.endYear - 1)
   const uid = useScenario.getState().addEvent(def, { start, zone: opts.zone })
   useApp.setState({
     placing: null,

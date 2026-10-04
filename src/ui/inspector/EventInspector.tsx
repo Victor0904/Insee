@@ -8,6 +8,7 @@ import { eventDef, removeEvent } from '../../state/actions'
 import { useApp } from '../../state/appStore'
 import { useScenario } from '../../state/scenarioStore'
 import { Icon } from '../common/Icon'
+import { EvidenceBadge } from '../common/Evidence'
 import './EventInspector.css'
 
 const INTENSITIES = [
@@ -73,6 +74,7 @@ export function EventInspector() {
             {def.name}
           </h2>
           <p className="inspector__summary">{def.summary}</p>
+          <EvidenceBadge def={def} />
         </div>
         <button ref={closeRef} type="button" className="icon-btn" onClick={() => selectEvent(null)} aria-label="Fermer la fiche">
           <Icon name="close" />
@@ -173,7 +175,7 @@ export function EventInspector() {
         <summary>Hypothèse et source</summary>
         <p>{def.hypothesis}</p>
         <p className="inspector__source">
-          {def.source} <span className="estimated-tag">valeurs estimées</span>
+          {def.source}
         </p>
       </details>
 

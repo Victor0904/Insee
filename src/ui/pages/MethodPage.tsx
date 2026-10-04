@@ -12,7 +12,7 @@ const SECTIONS = [
   { id: 'reference', title: 'Le futur de référence' },
   { id: 'donnees', title: 'D’où viennent les données' },
   { id: 'estime', title: 'Ce qui est estimé' },
-  { id: 'evenements', title: 'Les événements : des hypothèses de jeu' },
+  { id: 'evenements', title: 'Les événements : trois niveaux de preuve' },
   { id: 'verifications', title: 'Les vérifications' },
   { id: 'indicateurs', title: 'Les indicateurs' },
   { id: 'limites', title: 'Les limites, sans les cacher' },
@@ -164,13 +164,29 @@ export function MethodPage() {
         </section>
 
         <section id="evenements" tabIndex={-1} className="method__section">
-          <h2>Les événements : des hypothèses de jeu</h2>
+          <h2>Les événements : trois niveaux de preuve</h2>
           <p>
             La bibliothèque compte {LIBRARY_VISIBLE.length} événements, plus {EVENT_LIBRARY.length - LIBRARY_VISIBLE.length} qui
-            n’arrivent qu’en conséquence d’un autre. <strong>Leurs effets chiffrés sont des hypothèses de jeu</strong>, pas des
-            prévisions : chaque fiche donne son hypothèse et, quand il existe, un ordre de grandeur historique (par exemple
-            les 15 000 décès en excès de la canicule de 2003).
+            n’arrivent qu’en conséquence d’un autre. Chaque fiche affiche son niveau de preuve :
           </p>
+          <ul>
+            <li>
+              <strong>Variante Insee ({EVENT_LIBRARY.filter((e) => e.evidence === 'insee').length}).</strong> L’événement reproduit
+              une variante officielle des projections 2026 : fécondité haute ou basse, espérance de vie haute ou basse,
+              migrations hautes ou basses, solde migratoire nul. Un test vérifie que l’écart du jeu au futur de référence
+              reste à moins de 10 % de celui publié par l’Insee, de 2030 à 2070.
+            </li>
+            <li>
+              <strong>Calé sur l’histoire ({EVENT_LIBRARY.filter((e) => e.evidence === 'historique').length}).</strong> À
+              intensité forte, la pandémie a l’ampleur de 2020 (+9 % de décès) et la canicule celle de 2003 (+2,7 % de décès
+              sur l’année). Vérifié par des tests.
+            </li>
+            <li>
+              <strong>Hypothèse de jeu ({EVENT_LIBRARY.filter((e) => !e.evidence || e.evidence === 'hypothese').length}).</strong>{' '}
+              Télétravail, exode urbain, montée des eaux… : des effets plausibles mais non calés, qui servent à explorer un
+              mécanisme, pas à prévoir.
+            </li>
+          </ul>
           <ul>
             <li>L’intensité met les effets à l’échelle : faible (30 %), moyenne (60 %), forte (100 %), extrême (150 %).</li>
             <li>
@@ -248,7 +264,7 @@ export function MethodPage() {
               Le futur de référence s’écarte un peu de la projection officielle (moins d’un point d’écart d’ici 2070 sur
               l’évolution de la population : voir les vérifications).
             </li>
-            <li>Les effets des événements sont des hypothèses de jeu : le jeu sert à comprendre des mécanismes, pas à prédire.</li>
+            <li>Hors variantes Insee et épisodes historiques, les effets des événements sont des hypothèses de jeu : ils servent à comprendre des mécanismes, pas à prédire.</li>
             <li>Les petits départements sont les plus sensibles aux hypothèses ; un écart de quelques milliers d’habitants n’est pas significatif.</li>
             <li>À Mayotte, le recensement n’entre pas dans le fichier national des migrations : les déménagements entre Mayotte et le reste de la France sont donc ignorés (le solde avec l’étranger, lui, est pris en compte).</li>
           </ul>

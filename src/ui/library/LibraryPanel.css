@@ -200,3 +200,7 @@
     position: relative;
   }
 }
+
+.ev-card__evidence {
+  margin: 6px 0 0;
+}

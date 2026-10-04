@@ -556,7 +556,16 @@ def build_reference(deps, nat, est2026):
     omphale = [[round(x) for x in by_dep[c]] for c in codes]
 
     est = [round(sum(est2026[c][0]) + sum(est2026[c][1])) for c in codes]
+
+    # Variantes officielles (population totale par année), pour caler et valider les événements
+    variants = {}
+    for code in ["11_fec_haute", "12_fec_basse", "13_ev_haute", "14_ev_basse", "15_smi_haut", "16_smi_bas", "53_smi_nul"]:
+        wbv = openpyxl.load_workbook(RAW / f"proj2026_{code}.xlsx", read_only=True, data_only=True)
+        tabs = [year_table(rows(wbv, sh)) for sh in ("populationH", "populationF")]
+        variants[code] = [round(sum((t[a].get(y) or 0) for t in tabs for a in t)) for y in years]
+
     return {
+        "variants": {"source": "Insee, projections de population 2026, variantes (France entière)", "years": years, "total": variants},
         "national": {"source": "Insee, projections de population 2026, scénario central (France entière)",
                      "years": years, "total": tot, "share0_19": young, "share20_64": adult, "share65plus": old},
         "omphale": {"source": "Insee, Omphale 2022, scénario central (départements)", "years": omphale_years, "pop": omphale},

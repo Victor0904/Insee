@@ -9,7 +9,59 @@ import { CAPITALES_REGIONALES, DIAGONALE, FRANCE, IDF, INDUSTRIEL, LITTORAL, MET
  * Toutes les valeurs sont des hypothèses de jeu (`estimated: true`) : quand un ordre de grandeur
  * historique existe, il est cité dans `source`.
  */
+
+/**
+ * Variantes officielles des projections Insee 2026. Leurs paramètres reproduisent l'écart de chaque
+ * variante au scénario central (fécondité et migrations : rapports nominaux des hypothèses ; espérance
+ * de vie : multiplicateur des risques de décès ajusté par simulation). Écarts vérifiés par des tests.
+ */
+const insee = (
+  id: string,
+  name: string,
+  icon: string,
+  summary: string,
+  effect: EventDef['effects'][number],
+  ramp: number,
+  variant: string,
+  hypothesis: string,
+  officialStart: number,
+): EventDef => ({
+  id,
+  name,
+  family: 'insee',
+  icon,
+  summary,
+  defaults: { duration: ramp, intensity: 1, zone: FRANCE },
+  profile: 'ramp',
+  persistent: true,
+  effects: [effect],
+  hypothesis,
+  source: `Insee, projections de population 2026, variante « ${name.replace(' (Insee)', '').toLowerCase()} ». L'écart du moteur à la variante officielle est mesuré par un test.`,
+  estimated: true,
+  evidence: 'insee',
+  inseeVariant: variant,
+  officialStart,
+})
+
+export const INSEE_VARIANTS: EventDef[] = [
+  insee('insee-fecondite-haute', 'Fécondité haute (Insee)', 'babies', 'Les familles ont 1,7 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.7 / 1.45 }, 3, '11_fec_haute',
+    'Indicateur de fécondité de 1,70 enfant par femme (au lieu de 1,45) : naissances multipliées par 1,17 à chaque âge, atteint en 3 ans puis maintenu.', 2026),
+  insee('insee-fecondite-basse', 'Fécondité basse (Insee)', 'baby', 'Les familles ont 1,2 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.2 / 1.45 }, 5, '12_fec_basse',
+    'Indicateur de fécondité de 1,20 enfant par femme (au lieu de 1,45) : naissances multipliées par 0,83 à chaque âge, atteint en 5 ans puis maintenu.', 2026),
+  insee('insee-esperance-haute', 'Espérance de vie haute (Insee)', 'medical', 'On vit plus longtemps que prévu : les gains d’espérance de vie s’accélèrent.', { kind: 'mortality', mult: 0.76 }, 30, '13_ev_haute',
+    'Risques de décès réduits progressivement de 24 % en 30 ans puis maintenus : multiplicateur ajusté pour reproduire la variante « espérance de vie haute ».', 2026),
+  insee('insee-esperance-basse', 'Espérance de vie basse (Insee)', 'alert', 'Les progrès de l’espérance de vie ralentissent fortement.', { kind: 'mortality', mult: 1.365 }, 44, '14_ev_basse',
+    'Risques de décès augmentés progressivement de 36,5 % d’ici 2070 par rapport au scénario central : multiplicateur ajusté pour reproduire la variante « espérance de vie basse ».', 2026),
+  insee('insee-migrations-hautes', 'Migrations hautes (Insee)', 'doorOpen', 'Le solde migratoire passe à +230 000 personnes par an au lieu de +150 000.', { kind: 'externalMult', mult: 230 / 150 }, 1, '15_smi_haut',
+    'Solde migratoire de +230 000 par an au lieu de +150 000 (×1,53), réparti comme dans le scénario central.', 2025),
+  insee('insee-migrations-basses', 'Migrations basses (Insee)', 'doorClosed', 'Le solde migratoire tombe à +70 000 personnes par an au lieu de +150 000.', { kind: 'externalMult', mult: 70 / 150 }, 1, '16_smi_bas',
+    'Solde migratoire de +70 000 par an au lieu de +150 000 (×0,47), réparti comme dans le scénario central.', 2025),
+  insee('insee-solde-nul', 'Solde migratoire nul (Insee)', 'globe', 'Autant de départs que d’arrivées avec l’étranger.', { kind: 'externalMult', mult: 0 }, 1, '53_smi_nul',
+    'Solde migratoire nul : scénario de travail de l’Insee, qui isole l’effet du seul mouvement naturel.', 2026),
+]
+
 export const EVENT_LIBRARY: EventDef[] = [
+  ...INSEE_VARIANTS,
   /* ------------------------------------------------------------------ santé */
   {
     id: 'pandemie',
@@ -20,9 +72,9 @@ export const EVENT_LIBRARY: EventDef[] = [
     defaults: { duration: 2, intensity: 0.6, zone: FRANCE },
     profile: 'step',
     effects: [
-      { kind: 'mortality', mult: 1.25, ages: [65, 100] },
-      { kind: 'mortality', mult: 1.05, ages: [0, 64] },
-      { kind: 'fertility', mult: 0.96 },
+      { kind: 'mortality', mult: 1.105, ages: [65, 100] },
+      { kind: 'mortality', mult: 1.02, ages: [0, 64] },
+      { kind: 'fertility', mult: 0.97 },
     ],
     cascades: [
       {
@@ -36,9 +88,10 @@ export const EVENT_LIBRARY: EventDef[] = [
       },
     ],
     hypothesis:
-      'Surmortalité de 25 % au-delà de 65 ans et de 5 % avant, à intensité forte ; naissances en léger recul pendant l’épidémie.',
-    source: 'Ordre de grandeur : +9 % de décès en France en 2020 (Insee, bilan démographique 2020).',
+      'À intensité forte, l’épidémie a l’ampleur de celle de 2020 : environ +9 % de décès sur l’année (risque de décès +10,5 % après 65 ans, +2 % avant), et des naissances en léger recul.',
+    source: 'Calage : +9 % de décès en France en 2020 par rapport à 2019 (Insee, bilan démographique 2020). Vérifié par un test.',
     estimated: true,
+    evidence: 'historique',
   },
   {
     id: 'progres-medical',
@@ -82,10 +135,12 @@ export const EVENT_LIBRARY: EventDef[] = [
     summary: 'Un été de chaleur extrême, comme en 2003.',
     defaults: { duration: 1, intensity: 1, zone: FRANCE },
     profile: 'pulse',
-    effects: [{ kind: 'mortality', mult: 1.05, ages: [75, 100] }],
-    hypothesis: 'Hausse de 5 % des risques de décès après 75 ans pendant l’année de la canicule.',
-    source: 'Ordre de grandeur : environ 15 000 décès en excès en août 2003 (Inserm, 2004), soit près de 3 % des décès de l’année.',
+    effects: [{ kind: 'mortality', mult: 1.038, ages: [75, 100] }],
+    hypothesis:
+      'À intensité forte, l’été a l’ampleur de 2003 : les décès de l’année augmentent d’environ 2,7 % (risque de décès +3,8 % après 75 ans). Comme il y aura plus de personnes âgées, cela représente davantage de décès qu’en 2003.',
+    source: 'Calage : environ 15 000 décès en excès en août 2003 (Inserm, 2004), soit 2,7 % des 562 000 décès de 2003 (Insee). Vérifié par un test.',
     estimated: true,
+    evidence: 'historique',
   },
   {
     id: 'canicules-repetees',
@@ -482,6 +537,7 @@ export const EVENT_LIBRARY: EventDef[] = [
 ]
 
 export const FAMILY_LABELS: Record<EventDef['family'], string> = {
+  insee: 'Variantes Insee',
   sante: 'Santé',
   climat: 'Climat',
   economie: 'Économie',

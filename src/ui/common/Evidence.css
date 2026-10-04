@@ -1,0 +1,26 @@
+.evidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 8px;
+  font-size: var(--fs-12);
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+}
+
+.evidence--insee {
+  color: var(--gain);
+  background: var(--gain-soft);
+}
+
+.evidence--historique {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+.evidence--hypothese {
+  color: var(--ink-muted);
+  border-style: dashed;
+}

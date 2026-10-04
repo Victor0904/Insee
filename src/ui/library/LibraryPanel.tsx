@@ -5,6 +5,7 @@ import { FAMILY_LABELS, LIBRARY_VISIBLE } from '../../events/library'
 import { useApp } from '../../state/appStore'
 import { useScenario } from '../../state/scenarioStore'
 import { beginDrag } from '../dnd/drag'
+import { EvidenceBadge } from '../common/Evidence'
 import './LibraryPanel.css'
 
 type Filter = 'tous' | EventDef['family']
@@ -14,7 +15,7 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
   const setPlacing = useApp((s) => s.setPlacing)
   const [filter, setFilter] = useState<Filter>('tous')
   const all = [...LIBRARY_VISIBLE, ...custom].filter((e) => !hidden.includes(e.id))
-  const families = (['tous', 'sante', 'climat', 'economie', 'politique', 'societe', 'imprevu', ...(custom.length ? ['perso'] : [])] as Filter[])
+  const families = (['tous', 'insee', 'sante', 'climat', 'economie', 'politique', 'societe', 'imprevu', ...(custom.length ? ['perso'] : [])] as Filter[])
   const shown = filter === 'tous' ? all : all.filter((e) => e.family === filter)
 
   return (
@@ -61,6 +62,9 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
                   {def.name}
                 </h3>
                 <p className="ev-card__summary">{def.summary}</p>
+                <p className="ev-card__evidence">
+                  <EvidenceBadge def={def} />
+                </p>
                 <details className="ev-card__more">
                   <summary>Hypothèse et source</summary>
                   <p>{def.hypothesis}</p>
