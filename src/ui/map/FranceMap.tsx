@@ -24,9 +24,11 @@ interface Props {
   /** Flux bruts entre départements de l'année affichée : o * n + d. */
   flows: Float32Array | null
   flowCount: number
+  /** Carte d'arrière-plan du mode avant / après : ni focus, ni clic, ni annonce. */
+  decorative?: boolean
 }
 
-export function FranceMap({ data, geom, values, scale, layer, theme, flows, flowCount }: Props) {
+export function FranceMap({ data, geom, values, scale, layer, theme, flows, flowCount, decorative = false }: Props) {
   const [box, { width, height }] = useSize<HTMLDivElement>()
   const selection = useApp((s) => s.selection)
   const select = useApp((s) => s.select)
@@ -92,7 +94,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
   const signed = layer.kind === 'signed'
 
   return (
-    <div className={`map ${placing ? 'map--placing' : ''}`} ref={box}>
+    <div className={`map ${placing ? 'map--placing' : ''} ${decorative ? 'map--decorative' : ''}`} ref={box} aria-hidden={decorative || undefined}>
       {projected && (
         <svg
           ref={svgRef}
@@ -100,9 +102,9 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           width={width}
           height={height}
           viewBox={`0 0 ${width} ${height}`}
-          tabIndex={0}
-          role="application"
-          aria-roledescription="carte"
+          tabIndex={decorative ? -1 : 0}
+          role={decorative ? undefined : 'application'}
+          aria-roledescription={decorative ? undefined : 'carte'}
           aria-label={`Carte des départements : ${layer.label}. Flèches pour parcourir, Entrée pour choisir, Échap pour revenir à la France.`}
           onKeyDown={onKey}
           onBlur={() => setFocusDep(null)}
@@ -144,7 +146,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           {focusDep !== null && <path d={projected.paths[focusDep]} className="map__focus" />}
         </svg>
       )}
-      {projected && showFlows && flows && (
+      {projected && showFlows && flows && !decorative && (
         <FlowCanvas
           width={width}
           height={height}

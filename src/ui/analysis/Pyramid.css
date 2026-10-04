@@ -1,0 +1,84 @@
+.pyramid {
+  margin: 0;
+}
+
+.pyramid__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-20);
+  font-weight: 600;
+  margin-bottom: var(--sp-2);
+}
+
+.pyramid svg {
+  display: block;
+}
+
+.pyramid__grid {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.pyramid__age,
+.pyramid__axis {
+  fill: var(--ink-muted);
+  font-size: 12px;
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+
+.pyramid__side {
+  fill: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pyramid__fill {
+  stroke: none;
+}
+
+.pyramid__fill--h {
+  fill: var(--ink);
+  fill-opacity: 0.55;
+}
+
+.pyramid__fill--f {
+  fill: var(--ink);
+  fill-opacity: 0.3;
+}
+
+.pyramid__ref {
+  fill: none;
+  stroke: var(--ref);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.pyramid--animated .pyramid__fill,
+.pyramid--animated .pyramid__ref {
+  transition: d 220ms var(--ease-in);
+}
+
+.pyramid__legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: var(--sp-2) 0 0;
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+}
+
+.pyramid__key {
+  display: inline-block;
+  width: 18px;
+  height: 10px;
+}
+
+.pyramid__key--fill {
+  background: color-mix(in srgb, var(--ink) 50%, transparent);
+}
+
+.pyramid__key--ref {
+  margin-left: var(--sp-3);
+  border: 1.5px dashed var(--ref);
+}

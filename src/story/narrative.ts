@@ -171,12 +171,12 @@ export function narrate(
     const ev = blame(data, res.events, catalog, zoneDepsAll, year, ['retirementAge'])
     lines.push({
       text: `${areaName(data, area)} : ${fmtInt(ia.pensionPressure)} personnes en âge de retraite pour 100 cotisants en ${year}, contre ${fmtInt(ib.pensionPressure)} dans la référence${ev ? `, ${eventPhrase(ev, res.events, catalog)}` : ''}.`,
-      tone: dPension < 0 ? 'gain' : 'loss',
+      tone: dPension > 0 ? 'gain' : 'loss',
     })
   } else if (Math.abs(dWork) >= 1) {
     lines.push({
       text: `${areaName(data, area)} : ${fmtInt(ia.seniorsPer100Workers)} seniors pour 100 actifs en ${year}, contre ${fmtInt(ib.seniorsPer100Workers)} dans la référence.`,
-      tone: dWork < 0 ? 'gain' : 'loss',
+      tone: dWork > 0 ? 'gain' : 'loss',
     })
   }
 

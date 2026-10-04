@@ -35,6 +35,11 @@ export interface AppState {
   selectedEvent: string | null
   /** Le joueur a choisi lui-même une couche de carte (on ne la change plus automatiquement). */
   layerTouched: boolean
+  /** Indicateur dont on explique l'écart (« D'où vient cet écart ? »). */
+  why: string | null
+  /** Mode avant / après sur la carte. */
+  compare: 'off' | 'reference' | 'years'
+  compareYear: number
 
   setYear: (y: number) => void
   setPlaying: (p: boolean) => void
@@ -47,6 +52,8 @@ export interface AppState {
   setLibraryOpen: (v: boolean) => void
   setPlacing: (p: AppState['placing']) => void
   selectEvent: (uid: string | null) => void
+  openWhy: (metric: string | null) => void
+  setCompare: (c: AppState['compare']) => void
 }
 
 const readPref = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
@@ -91,6 +98,9 @@ export const useApp = create<AppState>()((set, get) => ({
   placing: null,
   selectedEvent: null,
   layerTouched: false,
+  why: null,
+  compare: 'off',
+  compareYear: 2025,
 
   setYear: (y) => {
     const d = get().data
@@ -115,4 +125,6 @@ export const useApp = create<AppState>()((set, get) => ({
   setLibraryOpen: (v) => set({ libraryOpen: v }),
   setPlacing: (p) => set({ placing: p, libraryOpen: false }),
   selectEvent: (uid) => set({ selectedEvent: uid }),
+  openWhy: (metric) => set({ why: metric }),
+  setCompare: (c) => set({ compare: c }),
 }))

@@ -4,6 +4,7 @@ import { installShortcuts } from '../../state/actions'
 import { startRunner } from '../../state/runner'
 import { useScenario } from '../../state/scenarioStore'
 import { Icon } from '../common/Icon'
+import { WhyDialog } from '../analysis/WhyDialog'
 import { DragGhost } from '../dnd/DragGhost'
 import { EventInspector } from '../inspector/EventInspector'
 import { CustomEventDialog } from '../library/CustomEventDialog'
@@ -141,6 +142,7 @@ export function AppShell() {
       <Timeline />
       <DragGhost />
       <CustomEventDialog open={creating} onClose={() => setCreating(false)} />
+      <WhyDialog />
     </div>
   )
 }

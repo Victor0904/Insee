@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 3 (4 octobre 2026).
+Dernière mise à jour : jalon 4 (4 octobre 2026).
 
 ---
 
@@ -193,4 +193,30 @@ Chaque phrase donne :
 
 Exemple réel : « Bretagne : + 4,5 % d'habitants (+ 163 781) par rapport à la référence en 2050, surtout des 45-64 ans, venus surtout d'Île-de-France, après « Télétravail généralisé » (2027). »
 
-**Limite :** l'attribution à un événement est heuristique (zone, type d'effet, intensité). La décomposition exacte par contrefactuel arrive au jalon 4 (« D'où vient cet écart ? »).
+**Limite :** dans le récit, l'attribution à un événement reste heuristique (zone, type d'effet, intensité). La part exacte de chaque événement est donnée par « D'où vient cet écart ? » (§ 10).
+
+## 10. Analyse — jalon 4
+
+### « D'où vient cet écart ? » (`src/engine/decompose.ts`)
+
+Un clic sur n'importe quel chiffre du panneau ouvre l'explication pour la zone et l'année affichées. Elle comporte deux parties.
+
+1. **Composantes.** L'écart de population à la référence est la somme exacte des écarts cumulés depuis 2025 :
+
+   Δpop = Δnaissances − Δdécès + Δarrivées − Δdéparts + Δétranger
+
+   Le reste non expliqué est vérifié par les tests : il est inférieur à 0,01 % de l'écart. À l'échelle de la France, arrivées et départs internes se compensent : on les affiche regroupés.
+2. **Part de chaque événement**, par **contrefactuel** : le Worker recalcule le scénario privé de chaque événement, et donc de ses cascades, puis ne transfère que les totaux par département et par année (≈ 30 Ko par événement). La différence avec le scénario complet est la part de l'événement. Le reste est affiché tel quel en « effets croisés ». Le calcul coûte une simulation par événement (≈ 70 ms chacune) ; il est fait à la demande et mis en cache par scénario.
+
+Pour un indicateur autre que la population (âge médian, seniors pour 100 actifs…), on affiche sa valeur comparée à la référence, puis la décomposition de l'écart de population, qui en est le moteur.
+
+### Visualisations
+
+| Élément | Choix |
+|---|---|
+| Indicateurs clés | Écart à la référence écrit avec son signe ; bleu = plus que la référence, orange = moins (la même règle partout, carte comprise) ; mention « estimé » sur les ratios du jeu (EHPAD, places d'école, pression sur les retraites) |
+| Pyramide des âges | Âge simple, hommes à gauche et femmes à droite ; scénario en plein, référence en contour pointillé ; **échelle fixe sur 2025-2100** pour voir la pyramide se transformer pendant la lecture ; transition du tracé coupée sous mouvement réduit ; tableau alternatif par tranches de 10 ans |
+| Courbes | 10 indicateurs au choix, scénario contre référence, curseur de l'année, période hachurée après 2070 |
+| Petits multiples | 13 régions, **même échelle** pour toutes (évolution depuis 2025), écart en points ; un clic affiche la région |
+| Avant / après | Deux cartes superposées, la seconde découpée par un séparateur (`clip-path`) réglable à la souris ou au clavier (curseur natif). On compare référence et scénario à la même année, ou 2025 et l'année affichée. La carte d'arrière-plan est décorative (ni focus ni annonce) |
+| Onglets | Motif ARIA « tabs » : flèches, Début, Fin |

@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react'
+import { useId, useMemo, useState } from 'react'
 import { useApp, type LayerId } from '../../state/appStore'
 import { Icon } from '../common/Icon'
 import { Term } from '../common/Term'
@@ -25,6 +25,10 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
   const panelOpen = useApp((s) => s.panelOpen)
   const libraryOpen = useApp((s) => s.libraryOpen)
   const setLibraryOpen = useApp((s) => s.setLibraryOpen)
+  const compare = useApp((s) => s.compare)
+  const setCompare = useApp((s) => s.setCompare)
+  const [split, setSplit] = useState(50)
+  const compareId = useId()
 
   const layer = layerById(layerId)
   const matrix = useMemo(() => layerMatrix(data, baseline, result, layerId), [data, baseline, result, layerId])
@@ -32,6 +36,16 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
   const yi = year - data.startYear
   const n = data.nDep
   const values = useMemo(() => matrix.subarray(yi * n, (yi + 1) * n), [matrix, yi, n])
+  // mode avant / après : même couche et même échelle, à gauche « avant », à droite « après »
+  const refMatrix = useMemo(
+    () => (compare === 'reference' ? layerMatrix(data, baseline, baseline, layerId) : null),
+    [compare, data, baseline, layerId],
+  )
+  const before = useMemo(() => {
+    if (compare === 'reference' && refMatrix) return refMatrix.subarray(yi * n, (yi + 1) * n)
+    if (compare === 'years') return matrix.subarray(0, n)
+    return null
+  }, [compare, refMatrix, matrix, yi, n])
   const flows = useMemo(() => {
     if (!result.flows) return null
     const fy = Math.min(yi, result.nYears - 2)
@@ -61,6 +75,14 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
           <Icon name="flows" size={18} />
           Flux
         </button>
+        <label htmlFor={compareId} className="sr-only">
+          Mode avant / après
+        </label>
+        <select id={compareId} className="select" value={compare} onChange={(e) => setCompare(e.target.value as typeof compare)}>
+          <option value="off">Une seule carte</option>
+          <option value="reference">Avant / après : référence | scénario</option>
+          <option value="years">Avant / après : 2025 | {year}</option>
+        </select>
         <button
           type="button"
           className="toggle mapview__library"
@@ -83,7 +105,35 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
         </button>
       </div>
       <div className="mapview__stage">
-        <FranceMap data={data} geom={geom} values={values} scale={scale} layer={layer} theme={theme} flows={flows} flowCount={narrow ? 20 : 36} />
+        {before ? (
+          <div className="compare">
+            <div className="compare__layer">
+              <FranceMap data={data} geom={geom} values={before} scale={scale} layer={layer} theme={theme} flows={null} flowCount={0} decorative />
+            </div>
+            <div className="compare__layer" style={{ clipPath: `inset(0 0 0 ${split}%)` }}>
+              <FranceMap data={data} geom={geom} values={values} scale={scale} layer={layer} theme={theme} flows={null} flowCount={0} />
+            </div>
+            <div className="compare__divider" style={{ left: `${split}%` }} aria-hidden="true" />
+            <span className="compare__tag compare__tag--left" style={{ maxWidth: `calc(${split}% - 16px)` }}>
+              {compare === 'reference' ? `Référence ${year}` : `En 2025`}
+            </span>
+            <span className="compare__tag compare__tag--right" style={{ maxWidth: `calc(${100 - split}% - 16px)` }}>
+              {compare === 'reference' ? `Ce scénario ${year}` : `En ${year}`}
+            </span>
+            <input
+              type="range"
+              className="compare__range"
+              min={0}
+              max={100}
+              value={split}
+              onChange={(e) => setSplit(Number(e.target.value))}
+              aria-label="Séparateur avant / après : à gauche avant, à droite après"
+              aria-valuetext={`${split} % de la carte montre l’avant`}
+            />
+          </div>
+        ) : (
+          <FranceMap data={data} geom={geom} values={values} scale={scale} layer={layer} theme={theme} flows={flows} flowCount={narrow ? 20 : 36} />
+        )}
         <details className="legend" open={!narrow} key={narrow ? 'n' : 'w'}>
           <summary className="legend__title">
             <span>

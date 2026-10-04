@@ -66,7 +66,7 @@ export function CustomEventDialog({ open, onClose }: { open: boolean; onClose: (
   const destinations = [
     ...NAMED_ZONES.filter((z) => z.zone.level !== 'france').map((z) => ({ key: zoneKey(z.zone), zone: z.zone, label: z.label })),
     ...data.regions.map((r) => ({ key: zoneKey({ level: 'region', codes: [r.code] }), zone: { level: 'region' as const, codes: [r.code] }, label: r.name })),
-  ]
+  ].filter((d, i, all) => all.findIndex((x) => x.key === d.key) === i)
 
   useEffect(() => {
     const d = ref.current

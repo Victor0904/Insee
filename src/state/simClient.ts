@@ -22,3 +22,14 @@ export async function runSimulation(scenario: Scenario): Promise<SimResult | nul
   const res = await worker().run(scenario, id)
   return id === counter ? res : null
 }
+
+/** Contrefactuels « sans tel événement » (calculés à la demande, mis en cache par scénario). */
+const contribCache = new WeakMap<Scenario, Promise<{ uid: string; totals: Float32Array }[]>>()
+export function computeContributions(scenario: Scenario) {
+  let p = contribCache.get(scenario)
+  if (!p) {
+    p = worker().contributions(scenario)
+    contribCache.set(scenario, p)
+  }
+  return p
+}
