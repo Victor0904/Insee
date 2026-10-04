@@ -1,8 +1,8 @@
 # Et si… ?
 
-Un jeu de simulation démographique de la France dans le navigateur. On déclenche des événements (pandémie, canicules, politique nataliste, exode urbain…) et on observe, année après année et département par département, comment la population s'écarte d'un scénario de référence fondé sur les données de l'Insee.
+**Un jeu de simulation démographique de la France dans le navigateur.** On déclenche des événements (pandémie, canicules, politique nataliste, télétravail, exode urbain…) et on observe, année après année et département par département, comment la population s'écarte d'un futur de référence fondé sur les données de l'Insee.
 
-> **État : jalon 5 — modes de jeu.** Bac à sable, 9 défis notés, mode « Devine » (8 questions dont les réponses sont calculées par le moteur), 5 scénarios célèbres et un tutoriel interactif de 4 étapes. Prochaine étape : sauvegarde, partage et finitions (jalon 6).
+![Le scénario « Tous au vert » en 2060 : la Bretagne et les départements de la diagonale gagnent des habitants, l'Île-de-France en perd](docs/capture.png)
 
 ## Installation
 
@@ -13,17 +13,17 @@ npm install
 npm run dev        # http://localhost:5173
 ```
 
-Les données compactes sont déjà dans `public/data/` : aucun téléchargement n'est nécessaire pour lancer le jeu.
+Les données compactes sont livrées dans `public/data/` : rien à télécharger pour jouer.
 
 ## Commandes
 
 | Commande | Rôle |
 |---|---|
 | `npm run dev` | Serveur de développement |
-| `npm test` | Tests du moteur (conservation, agrégations, déterminisme, performance, validation) |
-| `npm run e2e` | Parcours Playwright (lecture, clavier, zones, accessibilité axe en clair et en sombre, ordinateur et téléphone) |
-| `npm run lint` / `npm run typecheck` | Qualité du code |
-| `npm run build` | Version de production dans `dist/` |
+| `npm run build` puis `npm run preview` | Version de production |
+| `npm test` | Tests du moteur (Vitest) : conservation, agrégations, déterminisme, performance, écarts aux projections Insee, événements, cascades, défis, partage |
+| `npm run e2e` | Parcours Playwright, sur ordinateur et téléphone : tutoriel, ajout d'événement, glisser-déposer, défi réussi, Devine, lien partagé, exports, accessibilité (axe) en clair et en sombre |
+| `npm run lint` / `npm run typecheck` | Qualité du code (TypeScript strict) |
 | `npm run data` | Retélécharge les sources Insee (≈ 200 Mo) et reconstruit `public/data/` |
 
 Pour `npm run data`, créez une fois l'environnement Python :
@@ -33,16 +33,65 @@ python -m venv .venv-data
 .venv-data/Scripts/python -m pip install -r scripts/build-data/requirements.txt   # Windows ; bin/python ailleurs
 ```
 
+## Ce qu'on peut faire
+
+- **Carte de France** par département, avec 6 couches (écart à la référence, évolution, âge médian, seniors pour 100 actifs, arrivées moins départs, densité) et les déménagements animés.
+- **Frise 2025-2100** : lecture, pause, vitesse ; les événements y sont des blocs qu'on déplace et qu'on allonge.
+- **25 événements** et un éditeur pour créer les siens, avec des **cascades** visibles (canicules → crise agricole → migration vers le nord → logement).
+- **Analyse** :
+  - récit automatique ;
+  - « D'où vient cet écart ? » : naissances, décès, migrations et part de chaque événement ;
+  - pyramide des âges animée ;
+  - courbes ;
+  - 13 régions côte à côte ;
+  - comparaison avant / après sur la carte.
+- **Modes de jeu** :
+  - bac à sable ;
+  - 9 défis notés ;
+  - « Devine » : 8 questions dont les réponses sont calculées par le moteur ;
+  - 5 scénarios célèbres ;
+  - tutoriel interactif de 4 étapes.
+- **Sauvegarde et partage** :
+  - scénarios enregistrés sur l'appareil ;
+  - lien qui contient tout le scénario ;
+  - export PNG de la carte et CSV des données ;
+  - export et import JSON ;
+  - annuler et rétablir sans limite.
+- **Accessibilité** :
+  - tout se fait au clavier ;
+  - ARIA ;
+  - jamais la couleur seule (signes, hachures) ;
+  - palettes adaptées aux daltoniens ;
+  - thèmes clair et sombre ;
+  - `prefers-reduced-motion` respecté ;
+  - mise en page adaptée au téléphone.
+
 ## Le modèle en termes simples
 
 Chaque année, pour chaque département, chaque sexe et chaque âge :
 
 1. tout le monde vieillit d'un an, et une petite partie décède, selon les risques de décès de l'Insee ;
-2. des bébés naissent, selon le nombre d'enfants par femme à chaque âge ;
+2. des bébés naissent, selon le nombre d'enfants que les femmes ont à chaque âge ;
 3. des habitants déménagent vers d'autres départements, comme on l'observe au recensement ;
-4. des personnes arrivent de l'étranger ou partent à l'étranger.
+4. des personnes arrivent de l'étranger ou partent.
 
-C'est la **méthode des composantes**, celle qu'utilisent les démographes. Sans événement, le moteur suit les projections 2026 de l'Insee. Les écarts sont mesurés dans [DECISIONS.md](DECISIONS.md), et les sources sont listées dans [DATA_SOURCES.md](DATA_SOURCES.md).
+C'est la **méthode des composantes**, celle des démographes. Sans événement, le moteur suit les projections 2026 de l'Insee, et les écarts sont mesurés et testés. Les effets des événements sont des **hypothèses de jeu**, signalées comme telles. Tout est détaillé dans la page « Comment ça marche » de l'application, dans [DECISIONS.md](DECISIONS.md) (hypothèses, choix, limites) et dans [DATA_SOURCES.md](DATA_SOURCES.md) (sources et dates).
+
+## Structure
+
+```
+scripts/build-data/   construction des données (Python + DuckDB)
+public/data/          données compactes (JSON versionnés)
+src/engine/           moteur pur : simulate(), indicateurs, décomposition, validation
+src/worker/           Web Worker de simulation (Comlink)
+src/events/           bibliothèque d'événements, zones, icônes
+src/game/             défis, Devine, scénarios célèbres
+src/story/            récit automatique
+src/state/            état (Zustand + historique), sauvegarde, partage, exports
+src/ui/               interface (React)
+tests/engine/         tests Vitest       e2e/   parcours Playwright
+design-system/        design system (MASTER.md)
+```
 
 ## Licence des données
 

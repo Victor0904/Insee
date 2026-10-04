@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 5 (4 octobre 2026).
+Dernière mise à jour : jalon 6 (4 octobre 2026).
 
 ---
 
@@ -288,3 +288,34 @@ Charger un scénario est une action annulable (Ctrl+Z).
 4. cliquer sur l'écart.
 
 L'élément à utiliser est mis en évidence, avec « Retour » et « Passer » toujours disponibles (règle « User Freedom » du skill ui-ux-pro-max). Le tutoriel démarre à la première visite, et le bouton « Aide » le relance. Le paramètre `?tutoriel=0` le désactive ; les tests l'utilisent.
+
+## 12. Sauvegarde, partage, finitions — jalon 6
+
+| Choix | Raison |
+|---|---|
+| Lien de partage `?s=…` | Le scénario en JSON est compressé (deflate, `CompressionStream` natif) puis encodé en base64url : environ 400 caractères pour 2 événements. On utilise un paramètre plutôt que le `#`, déjà employé par la navigation. Le paramètre est retiré de l'adresse après chargement. Un lien partagé ne lance pas le tutoriel |
+| Validation de tout scénario importé (`validateScenario`) | Types d'événements connus seulement, zones et codes contrôlés, bornes sur toutes les valeurs, textes tronqués, événements personnalisés limités au préfixe `perso-`. Un lien ou un fichier abîmé affiche un message, sans planter |
+| Sauvegardes locales (`localStorage`) | Nommées, 50 au plus, avec chargement, suppression confirmée et date ; elles restent sur l'appareil. Les écritures sont protégées (navigation privée, stockage plein) |
+| Export PNG | La carte SVG est recopiée avec ses styles calculés en ligne, puis composée sur un canevas (×2) avec le titre, la légende (hachures comprises) et la mention des sources |
+| Export CSV | Séparateur « ; », virgule décimale, BOM UTF-8 (ouverture directe dans un tableur français). Deux fichiers : évolution de la zone 2025-2100, et tous les départements pour l'année affichée ; les ratios estimés sont suffixés `_estime` |
+| Aléa | Intensité de 0 à 100 % et « nouveau tirage » (graine) ; reproductible |
+| Téléphone | Les outils de l'en-tête passent dans un menu sous 600 px |
+
+### Mesures de performance (machine de développement, Ryzen 7 3700X, Chrome)
+
+| Mesure | Valeur |
+|---|---|
+| Simulation complète dans le Worker (référence) | ≈ 70 ms (Vitest, médiane) ; 120 ms au premier calcul dans le navigateur (avant optimisation par le moteur JavaScript) |
+| Réglage d'un événement → chiffres mis à jour à l'écran (build de production, 1 à 5 événements) | 86 à 122 ms |
+| « D'où vient cet écart ? » | une simulation par événement (≈ 70 ms chacune), à la demande, mis en cache |
+| JavaScript de l'application | 144 Ko compressés (+ 30 Ko pour le Worker) |
+| Données chargées au démarrage | 370 Ko compressés |
+
+La cible de « moins de 100 ms perçues » est **approchée mais pas toujours tenue** : le calcul complet reste de l'ordre de 70 à 120 ms. Les transitions de la carte (180 ms) lissent la mise à jour.
+
+### Limites restantes
+
+- L'historique détaillé (liste des actions) n'est proposé qu'au-dessus de 600 px ; sur téléphone, le menu offre annuler et rétablir.
+- Le glisser-déposer des cartes de la bibliothèque est pensé pour la souris et le stylet ; au doigt, on utilise « Placer », plus fiable sur petit écran.
+- Les départements et régions d'outre-mer ne sont pas simulés (jalon optionnel).
+- La CI GitHub Actions est fournie (`.github/workflows/ci.yml`) mais n'a pas pu être exécutée : le dépôt n'a pas de dépôt distant.

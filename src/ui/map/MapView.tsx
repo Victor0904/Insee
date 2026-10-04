@@ -1,4 +1,5 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import { mapLegend } from '../scenario/mapLegend'
 import { useApp, type LayerId } from '../../state/appStore'
 import { useGame } from '../../state/gameStore'
 import { Icon } from '../common/Icon'
@@ -36,6 +37,9 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
   const layer = layerById(layerId)
   const matrix = useMemo(() => layerMatrix(data, baseline, result, layerId), [data, baseline, result, layerId])
   const scale = useMemo(() => buildScale(layer, matrix, PALETTES[theme]), [layer, matrix, theme])
+  useEffect(() => {
+    Object.assign(mapLegend, { title: layer.label, colors: scale.colors, labels: scale.labels, hatched: layer.kind === 'signed' ? 4 : 0 })
+  }, [layer, scale])
   const yi = year - data.startYear
   const n = data.nDep
   const values = useMemo(() => matrix.subarray(yi * n, (yi + 1) * n), [matrix, yi, n])

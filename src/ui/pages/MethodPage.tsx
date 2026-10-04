@@ -1,10 +1,25 @@
 import { useEffect, useState } from 'react'
 import { fetchSources, type SourceEntry } from '../../data/load'
+import { RATIOS } from '../../engine/indicators'
+import { EVENT_LIBRARY, LIBRARY_VISIBLE } from '../../events/library'
 import { useApp } from '../../state/appStore'
+import { ThemeButton } from '../layout/AppShell'
 import { Validation } from './Validation'
 import './MethodPage.css'
 
-/** Page « Comment ça marche » : modèle, sources, limites et validation. Complétée au jalon 6. */
+const SECTIONS = [
+  { id: 'modele', title: 'Le modèle en quatre gestes' },
+  { id: 'reference', title: 'Le futur de référence' },
+  { id: 'donnees', title: 'D’où viennent les données' },
+  { id: 'estime', title: 'Ce qui est estimé' },
+  { id: 'evenements', title: 'Les événements : des hypothèses de jeu' },
+  { id: 'verifications', title: 'Les vérifications' },
+  { id: 'indicateurs', title: 'Les indicateurs' },
+  { id: 'limites', title: 'Les limites, sans les cacher' },
+  { id: 'technique', title: 'Sous le capot' },
+]
+
+/** Page « Comment ça marche » : le modèle, les sources et les limites, en langage clair. */
 export function MethodPage() {
   const data = useApp((s) => s.data)
   const baseline = useApp((s) => s.baseline)
@@ -14,26 +29,245 @@ export function MethodPage() {
   useEffect(() => {
     fetchSources().then(setSources, () => setSources([]))
   }, [])
+  const go = (id: string) => {
+    const el = document.getElementById(id)
+    el?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+    el?.focus({ preventScroll: true })
+  }
 
   return (
-    <div className="page">
+    <div className="page method">
       <header className="masthead">
-        <p className="masthead__kicker">Comment ça marche</p>
-        <h1 className="masthead__title">Le modèle, ses sources et ses limites</h1>
-        <p className="masthead__lede">
-          Chaque année, dans chaque département, chacun vieillit d’un an ; certains décèdent, des bébés naissent, des
-          habitants déménagent ou arrivent de l’étranger. C’est la méthode des composantes, celle des démographes.
-          Sans événement, le jeu suit les projections officielles de l’Insee : voici comment on le vérifie.
-        </p>
-        <p>
+        <div className="method__top">
           <a href="#/" className="link-back">
             ← Retour à la carte
           </a>
+          <ThemeButton />
+        </div>
+        <p className="masthead__kicker">Comment ça marche</p>
+        <h1 className="masthead__title">Le modèle, ses sources et ses limites</h1>
+        <p className="masthead__lede">
+          « Et si… ? » projette la population de chaque département, année après année, jusqu’en 2100. Sans événement, il
+          suit les projections officielles de l’Insee. Vos événements modifient les naissances, les décès ou les
+          déménagements, et on mesure l’écart.
         </p>
       </header>
-      {data && baseline && reference && (
-        <Validation data={data} baseline={baseline} reference={reference} sources={sources} officialHorizon={horizon} />
-      )}
+
+      <nav className="method__toc" aria-label="Sommaire">
+        <ol>
+          {SECTIONS.map((s) => (
+            <li key={s.id}>
+              <button type="button" className="btn-ghost" onClick={() => go(s.id)}>
+                {s.title}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </nav>
+
+      <main className="method__body">
+        <section id="modele" tabIndex={-1} className="method__section">
+          <h2>Le modèle en quatre gestes</h2>
+          <p>Chaque année, pour chacun des 96 départements, pour les hommes et les femmes, et pour chaque âge de 0 à 100 ans :</p>
+          <ol className="method__steps">
+            <li>
+              <strong>On vieillit d’un an.</strong> Une petite partie des habitants décède, selon les risques de décès de
+              l’Insee pour leur âge et leur sexe, corrigés pour le département.
+            </li>
+            <li>
+              <strong>Des bébés naissent</strong>, selon le nombre d’enfants que les femmes ont à chaque âge.
+            </li>
+            <li>
+              <strong>Des habitants déménagent</strong> vers d’autres départements, comme on l’observe au recensement :
+              environ 1,7 million de personnes par an.
+            </li>
+            <li>
+              <strong>Des personnes arrivent de l’étranger ou partent</strong>, selon le solde migratoire de l’Insee.
+            </li>
+          </ol>
+          <p>
+            C’est la <em>méthode des composantes</em>, celle des démographes : population de l’année suivante = survivants
+            vieillis + naissances − décès ± déménagements ± migrations avec l’étranger.
+          </p>
+        </section>
+
+        <section id="reference" tabIndex={-1} className="method__section">
+          <h2>Le futur de référence</h2>
+          <p>Sans événement, le jeu reprend les hypothèses du scénario central des projections de l’Insee publiées en 2026 :</p>
+          <ul>
+            <li>fécondité : 1,61 enfant par femme en 2024, puis 1,45 à partir de 2028 ;</li>
+            <li>espérance de vie : elle continue de progresser selon les hypothèses de mortalité de l’Insee, publiées jusqu’en 2125 ;</li>
+            <li>solde migratoire avec l’étranger : +150 000 personnes par an pour la France entière (environ 145 000 pour la métropole).</li>
+          </ul>
+          <p>
+            L’Insee ne publie pas d’hypothèses de fécondité et de migration après {horizon}. <strong>Au-delà, le jeu les prolonge au niveau de {horizon}</strong>{' '}
+            : c’est pourquoi les graphiques hachurent cette période.
+          </p>
+        </section>
+
+        <section id="donnees" tabIndex={-1} className="method__section">
+          <h2>D’où viennent les données</h2>
+          <p>Toutes les données viennent de l’Insee et de l’IGN, sous Licence Ouverte (Etalab 2.0).</p>
+          <div className="method__table-wrap">
+            <table className="checks">
+              <thead>
+                <tr>
+                  <th scope="col">Données</th>
+                  <th scope="col">Producteur, date</th>
+                  <th scope="col">Usage dans le jeu</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sources.map((s) => (
+                  <tr key={s.id}>
+                    <th scope="row">
+                      <a href={s.page}>{s.title}</a>
+                    </th>
+                    <td>
+                      {s.producer}, {s.date}
+                    </td>
+                    <td>{s.use}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="estime" tabIndex={-1} className="method__section">
+          <h2>Ce qui est estimé</h2>
+          <p>
+            Certaines valeurs n’existent pas telles quelles dans les publications. Le jeu les reconstruit, et le dit :
+          </p>
+          <ul>
+            <li>
+              <strong>L’âge exact par département.</strong> L’Insee publie les départements par tranches de 5 ans ; chaque
+              tranche est répartie par âge selon le profil national.
+            </li>
+            <li>
+              <strong>La mortalité propre à chaque département</strong>, calée sur ses décès réels de 2023-2024 et sur son
+              espérance de vie.
+            </li>
+            <li>
+              <strong>La fécondité propre à chaque département</strong>, calée sur ses naissances de 2024 (écart moyen avec
+              l’indicateur publié : 0,008 enfant par femme).
+            </li>
+            <li>
+              <strong>La répartition des migrations avec l’étranger</strong> entre départements, déduite du solde apparent
+              publié par l’Insee moins les déménagements internes.
+            </li>
+            <li>
+              <strong>Les besoins en places d’école et en EHPAD</strong> et la « pression sur les retraites » : des ratios
+              simples (voir les indicateurs), marqués « estimé » dans l’interface.
+            </li>
+          </ul>
+        </section>
+
+        <section id="evenements" tabIndex={-1} className="method__section">
+          <h2>Les événements : des hypothèses de jeu</h2>
+          <p>
+            La bibliothèque compte {LIBRARY_VISIBLE.length} événements, plus {EVENT_LIBRARY.length - LIBRARY_VISIBLE.length} qui
+            n’arrivent qu’en conséquence d’un autre. <strong>Leurs effets chiffrés sont des hypothèses de jeu</strong>, pas des
+            prévisions : chaque fiche donne son hypothèse et, quand il existe, un ordre de grandeur historique (par exemple
+            les 15 000 décès en excès de la canicule de 2003).
+          </p>
+          <ul>
+            <li>L’intensité met les effets à l’échelle : faible (30 %), moyenne (60 %), forte (100 %), extrême (150 %).</li>
+            <li>
+              Les <strong>cascades</strong> sont des règles visibles : par exemple, des canicules à répétition pendant plus de
+              4 ans déclenchent une crise agricole, qui pousse des familles vers le nord, ce qui tend le logement.
+            </li>
+            <li>
+              « D’où vient cet écart ? » mesure la part de chaque événement en recalculant le scénario sans lui ; ce qui
+              reste vient des événements qui agissent ensemble.
+            </li>
+          </ul>
+        </section>
+
+        <section id="verifications" tabIndex={-1} className="method__section">
+          <h2>Les vérifications</h2>
+          <p>
+            Ces contrôles sont recalculés ici à partir du moteur, et des tests automatiques échouent si les écarts
+            dépassent les seuils.
+          </p>
+          {data && baseline && reference && <Validation data={data} baseline={baseline} reference={reference} sources={[]} officialHorizon={horizon} />}
+        </section>
+
+        <section id="indicateurs" tabIndex={-1} className="method__section">
+          <h2>Les indicateurs</h2>
+          <div className="method__table-wrap">
+            <table className="checks">
+              <thead>
+                <tr>
+                  <th scope="col">Dans le jeu</th>
+                  <th scope="col">Définition</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th scope="row">Seniors pour 100 actifs</th>
+                  <td>Personnes de 65 ans et plus pour 100 personnes de 20 à 64 ans (rapport de dépendance des âgés).</td>
+                </tr>
+                <tr>
+                  <th scope="row">Retraités pour 100 cotisants (estimé)</th>
+                  <td>
+                    Personnes ayant l’âge de la retraite ({RATIOS.retirementAge} ans sans réforme) pour 100 personnes de 20 ans
+                    à cet âge. Ratio démographique : il ignore le taux d’emploi et les règles des pensions.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Places d’école (estimé)</th>
+                  <td>Enfants de 3 à 10 ans : une place par enfant en maternelle et en élémentaire.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Places en EHPAD (estimé)</th>
+                  <td>
+                    Personnes de 85 ans et plus × {Math.round(RATIOS.ehpadRate * 100)} % : ordre de grandeur retenu comme
+                    hypothèse de jeu, à rapprocher des enquêtes de la DREES.
+                  </td>
+                </tr>
+                <tr>
+                  <th scope="row">Âge médian</th>
+                  <td>La moitié des habitants a moins que cet âge.</td>
+                </tr>
+                <tr>
+                  <th scope="row">Habitants au km²</th>
+                  <td>Superficie calculée sur des contours simplifiés : valeur approchée.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="limites" tabIndex={-1} className="method__section">
+          <h2>Les limites, sans les cacher</h2>
+          <ul>
+            <li>Les déménagements entre départements gardent les habitudes observées vers 2022 ; seuls les événements les changent.</li>
+            <li>Chaque département garde le même écart de fécondité et de mortalité avec la moyenne nationale jusqu’en 2100.</li>
+            <li>
+              Le futur de référence perd un peu plus d’habitants que la projection officielle (environ 1 point d’écart en
+              2070) ; celle-ci couvre la France entière, où les départements d’outre-mer grandissent plus vite.
+            </li>
+            <li>Les effets des événements sont des hypothèses de jeu : le jeu sert à comprendre des mécanismes, pas à prédire.</li>
+            <li>Les petits départements sont les plus sensibles aux hypothèses ; un écart de quelques milliers d’habitants n’est pas significatif.</li>
+            <li>Les départements et régions d’outre-mer ne sont pas encore simulés.</li>
+          </ul>
+        </section>
+
+        <section id="technique" tabIndex={-1} className="method__section">
+          <h2>Sous le capot</h2>
+          <ul>
+            <li>
+              Une simulation complète (96 départements × 2 sexes × 101 âges × 75 ans) tourne dans un Web Worker, sans
+              bloquer l’interface : {baseline ? <strong>{Math.round(baseline.elapsedMs)} ms</strong> : '—'} sur cet appareil
+              pour le futur de référence.
+            </li>
+            <li>Le moteur est une fonction pure : même scénario, même résultat ; l’option « aléa » utilise un tirage reproductible.</li>
+            <li>Le code, les hypothèses détaillées et les mesures d’écart sont décrits dans les fichiers DECISIONS.md et DATA_SOURCES.md du projet.</li>
+          </ul>
+          <p className="note">Données : Insee et IGN, Licence Ouverte / Etalab 2.0.</p>
+        </section>
+      </main>
     </div>
   )
 }

@@ -13,6 +13,7 @@ const PATHS = {
   chevron: 'm9 6 6 6-6 6',
   speed: 'M4 6l7 6-7 6zM12 6l7 6-7 6z',
   map: 'M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 6.5 9 4zm0 0v13m6-10.5v13',
+  save: 'M5 3h11l3 3v15H5zM8 3v6h7V3M8 21v-7h8v7',
   book: 'M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4zm0 13a3 3 0 0 1 3-3h11',
 } as const
 

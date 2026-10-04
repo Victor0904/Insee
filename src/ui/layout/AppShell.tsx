@@ -23,6 +23,9 @@ import { ZonePanel } from '../panel/ZonePanel'
 import { useResolvedTheme } from '../theme'
 import { Timeline } from '../timeline/Timeline'
 import { HistoryMenu } from './HistoryMenu'
+import { MobileMenu } from './MobileMenu'
+import { ScenarioDialog } from '../scenario/ScenarioDialog'
+import { decodeScenario } from '../../state/persistence'
 import './AppShell.css'
 
 const THEME_NEXT: Record<ThemePref, ThemePref> = { system: 'light', light: 'dark', dark: 'system' }
@@ -75,11 +78,25 @@ export function AppShell() {
   const closeRef = useRef<HTMLButtonElement>(null)
   const libCloseRef = useRef<HTMLButtonElement>(null)
   const [creating, setCreating] = useState(false)
+  const [scenarioOpen, setScenarioOpen] = useState(false)
   const mode = useGame((s) => s.mode)
 
   useEffect(() => {
     startRunner()
-    maybeStartTutorial()
+    // lien de partage : ?s=… contient le scénario compressé
+    const shared = new URLSearchParams(location.search).get('s')
+    if (shared) {
+      void decodeScenario(shared).then((sc) => {
+        const url = new URL(location.href)
+        url.searchParams.delete('s')
+        history.replaceState(null, '', url.toString())
+        if (!sc) return useGame.getState().say('Ce lien de partage est illisible ou incomplet.')
+        useScenario.getState().setScenario(sc, `Scénario partagé : ${sc.name}`)
+        const app = useApp.getState()
+        useApp.setState({ layer: app.layerTouched ? app.layer : 'delta', year: Math.min(2050, app.data?.endYear ?? 2050) })
+        useGame.getState().say(`Scénario partagé « ${sc.name} » chargé (${sc.events.length} événement(s)).`)
+      })
+    } else maybeStartTutorial()
     return installShortcuts()
   }, [])
   const closePanel = useMemo(() => () => setPanelOpen(false), [setPanelOpen])
@@ -102,6 +119,11 @@ export function AppShell() {
           <span className="topbar__status" role="status" aria-live="polite">
             {computing ? 'Calcul…' : ''}
           </span>
+          <div className="topbar__tools">
+          <button type="button" className="topbar__link" onClick={() => setScenarioOpen(true)} aria-haspopup="dialog" aria-label="Mon scénario : enregistrer, partager, exporter">
+            <Icon name="save" size={18} />
+            <span>Scénario</span>
+          </button>
           <HistoryMenu />
           <button type="button" className="topbar__link" onClick={() => useTutorial.getState().start()} aria-label="Revoir la prise en main">
             <Icon name="info" size={18} />
@@ -112,6 +134,8 @@ export function AppShell() {
             <span>Comment ça marche</span>
           </a>
           <ThemeButton />
+          </div>
+          <MobileMenu onScenario={() => setScenarioOpen(true)} />
         </nav>
       </header>
 
@@ -165,6 +189,7 @@ export function AppShell() {
       <CustomEventDialog open={creating} onClose={() => setCreating(false)} />
       <WhyDialog />
       <Toast />
+      <ScenarioDialog open={scenarioOpen} onClose={() => setScenarioOpen(false)} />
       <Tutorial />
     </div>
   )
