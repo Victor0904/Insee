@@ -3,6 +3,7 @@ import { redo, undo } from '../../state/actions'
 import { useApp, type ThemePref } from '../../state/appStore'
 import { Icon } from '../common/Icon'
 import { useTutorial } from '../tutorial/Tutorial'
+import { HistoryList } from './HistoryMenu'
 
 const THEME_NEXT: Record<ThemePref, ThemePref> = { system: 'light', light: 'dark', dark: 'system' }
 const THEME_LABEL: Record<ThemePref, string> = { system: 'automatique', light: 'clair', dark: 'sombre' }
@@ -10,6 +11,7 @@ const THEME_LABEL: Record<ThemePref, string> = { system: 'automatique', light: '
 /** Outils de l'en-tête regroupés dans un menu sur petit écran. */
 export function MobileMenu({ onScenario }: { onScenario: () => void }) {
   const [open, setOpen] = useState(false)
+  const [showHistory, setShowHistory] = useState(false)
   const box = useRef<HTMLDivElement>(null)
   const theme = useApp((s) => s.theme)
   const setTheme = useApp((s) => s.setTheme)
@@ -54,6 +56,14 @@ export function MobileMenu({ onScenario }: { onScenario: () => void }) {
           <button type="button" className="menu__item" onClick={act(redo)}>
             Rétablir (Ctrl+Y)
           </button>
+          <button type="button" className="menu__item" aria-expanded={showHistory} onClick={() => setShowHistory(!showHistory)}>
+            <Icon name="restart" size={18} /> Historique des actions
+          </button>
+          {showHistory && (
+            <div className="menu__history" role="region" aria-label="Historique des actions">
+              <HistoryList onDone={() => setOpen(false)} />
+            </div>
+          )}
           <button type="button" className="menu__item" onClick={act(() => useTutorial.getState().start())}>
             <Icon name="info" size={18} /> Revoir la prise en main
           </button>

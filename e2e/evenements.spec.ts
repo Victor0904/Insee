@@ -57,7 +57,7 @@ test('annuler et rétablir au clavier, avec l’historique', async ({ page }) =>
   await page.keyboard.press('Control+y')
   await expect(page.locator('.lanes .block')).toHaveCount(2)
   const menu = page.getByRole('button', { name: 'Menu des outils' })
-  if (await menu.isVisible()) return // l'historique détaillé est réservé aux écrans plus larges
+  if (await menu.isVisible()) await menu.click() // sur téléphone, l'historique est dans le menu
   await page.getByRole('button', { name: 'Historique des actions' }).click()
   await expect(page.getByRole('region', { name: 'Historique des actions' })).toContainText('Ajout : Pandémie')
 })

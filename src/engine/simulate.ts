@@ -18,6 +18,24 @@ const COMP_EXT = T.COMP_EXT
 export interface SimOptions {
   /** Enregistre la matrice des flux bruts entre départements pour chaque année (pour la carte). */
   recordFlows?: boolean
+  /** Conserve l'état exact (double précision) de chaque 1er janvier, pour servir de point de reprise. */
+  keepStates?: boolean
+  /**
+   * Point de reprise : résultat et états d'une simulation SANS événement ni aléa (la référence).
+   * Les années antérieures au premier événement sont alors recopiées au lieu d'être recalculées :
+   * le résultat est identique au bit près, pour un coût moindre.
+   */
+  checkpoint?: { result: SimResult; states: Float64Array[] }
+  /**
+   * Fournisseur de tableaux réutilisables (évite d'allouer ~9 Mo par simulation, ce qui déclenche
+   * le ramasse-miettes). Doit renvoyer un Float32Array de la longueur demandée, de contenu quelconque.
+   */
+  alloc?: (length: number) => Float32Array
+}
+
+/** États exacts de chaque 1er janvier (si `keepStates`). */
+export interface SimResultWithStates extends SimResult {
+  states?: Float64Array[]
 }
 
 const MAX_OUT_RATE = 0.9
@@ -33,7 +51,7 @@ const MAX_OUT_RATE = 0.9
  *
  * Fonction pure et déterministe : même scénario (et même graine) → mêmes résultats.
  */
-export function simulate(data: ModelData, scenario: Scenario, catalog: EventCatalog, opts: SimOptions = {}): SimResult {
+export function simulate(data: ModelData, scenario: Scenario, catalog: EventCatalog, opts: SimOptions = {}): SimResultWithStates {
   const t0 = typeof performance !== 'undefined' ? performance.now() : Date.now()
   const n = data.nDep
   const Y = data.nYears
@@ -44,10 +62,11 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   const compiled = prepareEvents(data, events, catalog)
   const mods = createModifiers(data)
 
-  const pop = new Float32Array(Y * block)
-  const comps = new Float32Array(Y * n * N_COMP)
-  const flows = opts.recordFlows ? new Float32Array(Y * n * n) : undefined
-  const retirementAge = new Float32Array(Y).fill(64)
+  const alloc = opts.alloc ?? ((len: number) => new Float32Array(len))
+  const pop = alloc(Y * block) // entièrement réécrit plus bas
+  const comps = alloc(Y * n * N_COMP).fill(0)
+  const flows = opts.recordFlows ? alloc(Y * n * n).fill(0) : undefined
+  const retirementAge = alloc(Y).fill(64)
 
   let cur = Float64Array.from(data.pop0)
   let next = new Float64Array(block)
@@ -58,6 +77,8 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   const moverProfile = new Float64Array(SEXES * AGES)
   const bgTotals = new Float64Array(SEXES * data.nBroad)
   const inflowBg = new Float64Array(n * SEXES * data.nBroad)
+  const ageShare = new Float64Array(SEXES * AGES)
+  const moveVec = new Float64Array(cell)
   pop.set(cur, 0)
 
   // aléa reproductible
@@ -68,8 +89,24 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   const migNoise = new Float64Array(n).fill(1)
 
   let clipped = 0
+  const states: Float64Array[] | undefined = opts.keepStates ? [Float64Array.from(cur)] : undefined
 
-  for (let yi = 0; yi < Y - 1; yi++) {
+  // reprise : avant le premier événement, le scénario est identique à la référence
+  let first = 0
+  const ck = opts.checkpoint
+  if (ck && r === 0 && ck.states.length === Y && (!flows || ck.result.flows)) {
+    first = compiled.length ? Math.max(0, Math.min(Y - 1, Math.min(...compiled.map((c) => c.ev.start)) - data.startYear)) : Y - 1
+    if (first > 0) {
+      pop.set(ck.result.pop.subarray(0, (first + 1) * block))
+      comps.set(ck.result.comps.subarray(0, first * n * N_COMP))
+      if (flows && ck.result.flows) flows.set(ck.result.flows.subarray(0, first * n * n))
+      retirementAge.set(ck.result.retirementAge.subarray(0, first))
+      cur = Float64Array.from(ck.states[first])
+      if (states) for (let i = 1; i <= first; i++) states.push(Float64Array.from(ck.states[i]))
+    }
+  }
+
+  for (let yi = first; yi < Y - 1; yi++) {
     const y = data.startYear + yi
     // remet les modificateurs à leur valeur neutre puis applique les événements actifs
     if (yi === 0 || compiled.length > 0) fillModifiers(data, mods, compiled, y)
@@ -202,43 +239,53 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
     bgTotals.fill(0)
     for (let s = 0; s < SEXES; s++)
       for (let a = 0; a < AGES; a++) bgTotals[s * nB + data.ageToBroad[a]] += moverProfile[s * AGES + a]
+    // part de chaque âge dans sa classe large (multiplication plutôt que division dans la boucle)
+    for (let s = 0; s < SEXES; s++)
+      for (let a = 0; a < AGES; a++) {
+        const tot = bgTotals[s * nB + data.ageToBroad[a]]
+        ageShare[s * AGES + a] = tot === 0 ? 0 : moverProfile[s * AGES + a] / tot
+      }
     for (let d = 0; d < n; d++) {
       let inTotal = 0
       for (let s = 0; s < SEXES; s++) {
         const dst = d * cell + s * AGES
+        const inBase = (d * SEXES + s) * nB
         for (let a = 0; a < AGES; a++) {
-          const bg = data.ageToBroad[a]
-          const tot = bgTotals[s * nB + bg]
-          if (tot === 0) continue
-          const v = (inflowBg[(d * SEXES + s) * nB + bg] * moverProfile[s * AGES + a]) / tot
+          const v = inflowBg[inBase + data.ageToBroad[a]] * ageShare[s * AGES + a]
           delta[dst + a] += v
           inTotal += v
         }
       }
       comps[compBase + d * N_COMP + COMP_IN] += inTotal
     }
-    // déménagements ciblés (événements « des gens partent de… vers… »)
+    // déménagements ciblés (événements « des gens partent de… vers… ») : les départs de toutes les
+    // origines sont cumulés par sexe et âge, puis répartis une seule fois entre les destinations
     for (const mv of mods.moves) {
       let toTotal = 0
       for (const d of mv.to) toTotal += depTotal[d]
       if (toTotal <= 0) continue
+      moveVec.fill(0)
+      let movedAll = 0
       for (const o of mv.from) {
         let moved = 0
-        for (let s = 0; s < SEXES; s++)
-          for (let a = 0; a < AGES; a++) {
-            const v = next[o * cell + s * AGES + a] * Math.min(MAX_OUT_RATE, mv.rate[a])
-            if (v === 0) continue
-            moved += v
-            delta[o * cell + s * AGES + a] -= v
-            for (const dd of mv.to) delta[dd * cell + s * AGES + a] += (v * depTotal[dd]) / toTotal
-          }
-        if (moved === 0) continue
-        comps[compBase + o * N_COMP + COMP_OUT] += moved
-        for (const dd of mv.to) {
-          const v = (moved * depTotal[dd]) / toTotal
-          comps[compBase + dd * N_COMP + COMP_IN] += v
-          if (flows) flows[flowBase + o * n + dd] += v
+        for (let i = 0; i < cell; i++) {
+          const v = next[o * cell + i] * Math.min(MAX_OUT_RATE, mv.rate[i % AGES])
+          if (v === 0) continue
+          moved += v
+          moveVec[i] += v
+          delta[o * cell + i] -= v
         }
+        if (moved === 0) continue
+        movedAll += moved
+        comps[compBase + o * N_COMP + COMP_OUT] += moved
+        if (flows) for (const dd of mv.to) flows[flowBase + o * n + dd] += (moved * depTotal[dd]) / toTotal
+      }
+      if (movedAll === 0) continue
+      for (const dd of mv.to) {
+        const w = depTotal[dd] / toTotal
+        const dst = dd * cell
+        for (let i = 0; i < cell; i++) delta[dst + i] += moveVec[i] * w
+        comps[compBase + dd * N_COMP + COMP_IN] += movedAll * w
       }
     }
     for (let i = 0; i < block; i++) next[i] += delta[i]
@@ -277,6 +324,7 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
       }
 
     pop.set(next, (yi + 1) * block)
+    if (states) states.push(Float64Array.from(next))
     const tmp = cur
     cur = next
     next = tmp
@@ -287,5 +335,5 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
     fillModifiers(data, mods, compiled, data.endYear)
     retirementAge[Y - 1] = mods.retirementAge
   }
-  return { startYear: data.startYear, nYears: Y, nDep: n, pop, comps, flows, retirementAge, events, clipped, elapsedMs: t1 - t0 }
+  return { startYear: data.startYear, nYears: Y, nDep: n, pop, comps, flows, retirementAge, events, clipped, elapsedMs: t1 - t0, states, computedFrom: data.startYear + first }
 }

@@ -239,4 +239,6 @@ export interface SimResult {
   /** Population négative tronquée à 0 (contrôle de cohérence, doit rester négligeable). */
   clipped: number
   elapsedMs: number
+  /** Première année effectivement recalculée (les précédentes sont reprises de la référence). */
+  computedFrom?: number
 }

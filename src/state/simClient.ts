@@ -36,3 +36,9 @@ export function computeContributions(scenario: Scenario) {
 
 /** Simulation indépendante de la file d'affichage (mode Devine). */
 export const simulateDetached = (scenario: Scenario): Promise<SimResult> => worker().runDetached(scenario)
+
+/** Rend au Worker les tableaux d'un résultat qui n'est plus affiché. */
+export function recycleResult(r: SimResult) {
+  const bufs = [r.pop.buffer, r.comps.buffer, r.retirementAge.buffer, ...(r.flows ? [r.flows.buffer] : [])] as ArrayBuffer[]
+  void worker().recycle(Comlink.transfer(bufs, bufs))
+}

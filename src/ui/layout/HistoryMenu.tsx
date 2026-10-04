@@ -16,11 +16,52 @@ function Glyph({ d }: { d: string }) {
   )
 }
 
+/** Liste des actions passées ; un clic revient à l'étape choisie. Partagée entre l'en-tête et le menu mobile. */
+export function HistoryList({ onDone }: { onDone?: () => void }) {
+  const past = useStore(useScenario.temporal, (s) => s.pastStates)
+  const future = useStore(useScenario.temporal, (s) => s.futureStates)
+  const current = useScenario((s) => s.label)
+  // pastStates[i].label = état AVANT l'action ; l'action i est donc décrite par l'état suivant
+  const labels = [...past.map((p) => p.label ?? ''), current]
+  const steps = labels.slice(1)
+  return (
+    <>
+      {steps.length === 0 ? (
+        <p className="history__empty">Aucune action pour l’instant.</p>
+      ) : (
+        <ol className="history__list" reversed>
+          {[...steps].reverse().map((label, i) => (
+            <li key={`${label}-${i}`}>
+              {i === 0 ? (
+                <span className="history__current">
+                  {label} <span className="history__tag">actuel</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  className="history__step"
+                  onClick={() => {
+                    useScenario.temporal.getState().undo(i)
+                    onDone?.()
+                  }}
+                >
+                  {label}
+                  <span className="sr-only"> : revenir à cette étape</span>
+                </button>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+      {future.length > 0 && <p className="history__empty">{future.length} action(s) annulée(s) : Ctrl+Y pour rétablir.</p>}
+    </>
+  )
+}
+
 /** Annuler / rétablir (Ctrl+Z / Ctrl+Y) et liste des actions passées. */
 export function HistoryMenu() {
   const past = useStore(useScenario.temporal, (s) => s.pastStates)
   const future = useStore(useScenario.temporal, (s) => s.futureStates)
-  const current = useScenario((s) => s.label)
   const [open, setOpen] = useState(false)
   const box = useRef<HTMLDivElement>(null)
 
@@ -40,10 +81,6 @@ export function HistoryMenu() {
     }
   }, [open])
 
-  // pastStates[i].label = état AVANT l'action ; l'action i est donc décrite par l'état suivant
-  const labels = [...past.map((p) => p.label ?? ''), current]
-  const steps = labels.slice(1).map((label, i) => ({ label, back: labels.length - 2 - i }))
-
   return (
     <div className="history" ref={box}>
       <button type="button" className="icon-btn" onClick={undo} disabled={!past.length} aria-label="Annuler (Ctrl+Z)" title="Annuler (Ctrl+Z)">
@@ -58,34 +95,7 @@ export function HistoryMenu() {
       </button>
       {open && (
         <div className="history__panel" role="region" aria-label="Historique des actions">
-          {steps.length === 0 ? (
-            <p className="history__empty">Aucune action pour l’instant.</p>
-          ) : (
-            <ol className="history__list" reversed>
-              {[...steps].reverse().map((s, i) => (
-                <li key={`${s.label}-${i}`}>
-                  {i === 0 ? (
-                    <span className="history__current">
-                      {s.label} <span className="history__tag">actuel</span>
-                    </span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="history__step"
-                      onClick={() => {
-                        useScenario.temporal.getState().undo(i)
-                        setOpen(false)
-                      }}
-                    >
-                      {s.label}
-                      <span className="sr-only"> : revenir à cette étape</span>
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ol>
-          )}
-          {future.length > 0 && <p className="history__empty">{future.length} action(s) annulée(s) : Ctrl+Y pour rétablir.</p>}
+          <HistoryList onDone={() => setOpen(false)} />
         </div>
       )}
     </div>

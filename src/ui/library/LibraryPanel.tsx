@@ -23,7 +23,9 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
         <h2 id="library-title" className={compact ? 'library__title library__title--small' : 'library__title'}>
           {compact ? 'Vos leviers' : 'Événements'}
         </h2>
-        <p className="library__help">Glissez une carte sur un département ou sur la frise, ou choisissez « Placer ».</p>
+        <p className="library__help">
+          Glissez une carte (au doigt : par sa poignée) sur un département ou sur la frise, ou choisissez « Placer ».
+        </p>
       </div>
       <div className="library__filters" role="group" aria-label="Filtrer par famille">
         {families.map((f) => (
@@ -38,13 +40,21 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
             <article
               className={`ev-card ev-card--${def.family}`}
               onPointerDown={(e) => {
-                if ((e.target as HTMLElement).closest('button, summary')) return
+                const t = e.target as HTMLElement
+                if (t.closest('button, summary')) return
+                // au doigt, seule la poignée démarre un glisser : le reste de la carte fait défiler la liste
+                if (e.pointerType === 'touch' && !t.closest('.ev-card__grip')) return
                 beginDrag(def.id, e)
               }}
               aria-labelledby={`ev-${def.id}`}
             >
               <span className="ev-card__icon">
                 <EventIcon name={def.icon} />
+                <span className="ev-card__grip" aria-hidden="true" title="Faire glisser sur la carte ou la frise">
+                  <svg width="14" height="20" viewBox="0 0 14 20">
+                    {[3, 10, 17].map((y) => [4, 10].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.6" fill="currentColor" />))}
+                  </svg>
+                </span>
               </span>
               <div className="ev-card__body">
                 <h3 id={`ev-${def.id}`} className="ev-card__name">

@@ -1,7 +1,7 @@
 import { useApp } from './appStore'
 import { effectiveScenario, useScenario } from './scenarioStore'
-import { runSimulation } from './simClient'
-import type { Scenario } from '../engine/types'
+import { recycleResult, runSimulation } from './simClient'
+import type { Scenario, SimResult } from '../engine/types'
 
 /**
  * Relance la simulation dans le Worker à chaque changement du scénario (ou de son aperçu).
@@ -19,7 +19,11 @@ async function pump() {
   useApp.setState({ computing: true })
   try {
     const res = await runSimulation(sc)
-    if (res && !pending) useApp.setState({ result: res, lastRunMs: res.elapsedMs })
+    if (res && !pending) {
+      const old = useApp.getState().result
+      useApp.setState({ result: res, lastRunMs: res.elapsedMs })
+      retire(old)
+    }
   } catch (e) {
     console.error('Simulation impossible', e)
   } finally {
@@ -29,12 +33,28 @@ async function pump() {
   }
 }
 
+/**
+ * Recyclage de l'ancien résultat, deux images plus tard (l'interface a fini de se rendre avec le
+ * nouveau). Jamais la référence, ni un résultat encore affiché.
+ */
+function retire(old: SimResult | null) {
+  if (!old) return
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      const { result, baseline } = useApp.getState()
+      if (old !== result && old !== baseline && old.pop.byteLength) recycleResult(old)
+    }),
+  )
+}
+
 export function requestSimulation(sc: Scenario) {
   const { baseline } = useApp.getState()
   // sans événement ni aléa, le résultat est la référence : inutile de recalculer
   if (baseline && sc.events.length === 0 && !(sc.randomness > 0)) {
     pending = null
+    const old = useApp.getState().result
     useApp.setState({ result: baseline })
+    retire(old)
     return
   }
   pending = sc

@@ -377,3 +377,12 @@
     padding: var(--sp-2) var(--sp-3);
   }
 }
+
+.menu__history {
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: 0 0 var(--sp-2);
+  padding: var(--sp-2);
+  background: var(--surface-2);
+  border-radius: var(--radius-control);
+}

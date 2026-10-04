@@ -93,6 +93,7 @@
 }
 
 .ev-card__icon {
+  position: relative;
   display: grid;
   place-items: center;
   width: 36px;
@@ -174,4 +175,28 @@
 
 .library__title--small {
   font-size: var(--fs-16);
+}
+
+/* poignée tactile : elle capte le geste (pas de défilement) pour glisser la carte au doigt */
+.ev-card__grip {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .ev-card__grip {
+    display: grid;
+    place-items: center;
+    position: absolute;
+    left: -46px;
+    top: -6px;
+    width: 44px;
+    height: 48px;
+    color: var(--ink-muted);
+    touch-action: none;
+    cursor: grab;
+  }
+  .ev-card {
+    padding-left: 52px;
+    position: relative;
+  }
 }
