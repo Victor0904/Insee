@@ -1,0 +1,49 @@
+/* Boutons partagés. Une seule action principale (encre pleine) visible à la fois. */
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  min-height: 44px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--radius-control);
+  font-weight: 600;
+  transition: transform var(--dur-out) var(--ease-out), background var(--dur-out) var(--ease-out);
+}
+
+.btn-primary {
+  background: var(--action);
+  color: var(--on-action);
+  border: 1px solid var(--action);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.btn-danger {
+  color: var(--loss);
+  border-color: var(--loss);
+}
+
+.btn-primary:active,
+.btn-secondary:active {
+  transform: scale(0.97);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

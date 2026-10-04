@@ -5,6 +5,7 @@ import { fmtDec1, fmtInt, fmtMillions, fmtSigned } from '../../lib/format'
 import { useApp } from '../../state/appStore'
 import { LineChart } from '../charts/LineChart'
 import { Estimated, Term } from '../common/Term'
+import { StoryBlock } from '../story/StoryBlock'
 import './ZonePanel.css'
 
 const encode = (a: AreaRef) => (a.level === 'france' ? 'FR' : `${a.level}:${a.code}`)
@@ -157,6 +158,8 @@ export function ZonePanel() {
         </p>
         {year > horizon && <p className="zone__warn">Au-delà de 2070 : hypothèses prolongées par le jeu.</p>}
       </div>
+
+      <StoryBlock />
 
       <LineChart
         title="Habitants (millions)"

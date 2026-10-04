@@ -60,7 +60,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.reload()
     await expect(page.locator('.map__dep')).toHaveCount(96)
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
-    expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} élément(s) — ${v.help}`)).toEqual([])
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes.length} élément(s) — ${v.help} — ${v.nodes.map((n) => n.target + ' ' + (n.failureSummary ?? '').slice(0, 160)).join(' | ')}`)).toEqual([])
   })
 }
 

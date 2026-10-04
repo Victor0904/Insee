@@ -1,0 +1,34 @@
+.ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 200;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: var(--sp-2);
+  align-items: center;
+  padding: var(--sp-2) var(--sp-3);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow);
+  pointer-events: none;
+  font-size: var(--fs-14);
+  max-width: 280px;
+}
+
+.ghost__name {
+  font-weight: 600;
+}
+
+.ghost__hint {
+  grid-column: 2;
+  font-size: var(--fs-12);
+  opacity: 0.85;
+}
+
+body.is-dragging,
+body.is-dragging * {
+  cursor: grabbing !important;
+  user-select: none;
+}

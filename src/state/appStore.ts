@@ -26,6 +26,15 @@ export interface AppState {
   showFlows: boolean
   theme: ThemePref
   panelOpen: boolean // tiroir d'analyse sur petit écran
+  libraryOpen: boolean // tiroir de la bibliothèque sur écran moyen ou petit
+  computing: boolean
+  lastRunMs: number
+  /** Événement en cours de placement (mode « choisir la zone »). */
+  placing: { type: string; start?: number } | null
+  /** Événement sélectionné (fiche de réglage ouverte). */
+  selectedEvent: string | null
+  /** Le joueur a choisi lui-même une couche de carte (on ne la change plus automatiquement). */
+  layerTouched: boolean
 
   setYear: (y: number) => void
   setPlaying: (p: boolean) => void
@@ -35,6 +44,9 @@ export interface AppState {
   setShowFlows: (v: boolean) => void
   setTheme: (t: ThemePref) => void
   setPanelOpen: (v: boolean) => void
+  setLibraryOpen: (v: boolean) => void
+  setPlacing: (p: AppState['placing']) => void
+  selectEvent: (uid: string | null) => void
 }
 
 const readPref = <T extends string>(key: string, allowed: readonly T[], fallback: T): T => {
@@ -73,6 +85,12 @@ export const useApp = create<AppState>()((set, get) => ({
   showFlows: !reducedMotion(),
   theme: readPref('etsi.theme', ['system', 'light', 'dark'] as const, 'system'),
   panelOpen: false,
+  libraryOpen: false,
+  computing: false,
+  lastRunMs: 0,
+  placing: null,
+  selectedEvent: null,
+  layerTouched: false,
 
   setYear: (y) => {
     const d = get().data
@@ -87,11 +105,14 @@ export const useApp = create<AppState>()((set, get) => ({
   },
   setSpeed: (s) => set({ speed: s }),
   select: (a) => set({ selection: a }),
-  setLayer: (l) => set({ layer: l }),
+  setLayer: (l) => set({ layer: l, layerTouched: true }),
   setShowFlows: (v) => set({ showFlows: v }),
   setTheme: (t) => {
     writePref('etsi.theme', t)
     set({ theme: t })
   },
   setPanelOpen: (v) => set({ panelOpen: v }),
+  setLibraryOpen: (v) => set({ libraryOpen: v }),
+  setPlacing: (p) => set({ placing: p, libraryOpen: false }),
+  selectEvent: (uid) => set({ selectedEvent: uid }),
 }))

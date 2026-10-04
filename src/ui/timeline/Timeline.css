@@ -1,11 +1,15 @@
 .timeline {
   display: grid;
   grid-template-columns: auto 1fr;
-  align-items: center;
+  align-items: end;
   gap: var(--sp-4) var(--sp-6);
   padding: var(--sp-3) var(--sp-4) var(--sp-4);
   background: var(--surface);
   border-top: 1px solid var(--rule);
+}
+
+.timeline__right {
+  min-width: 0;
 }
 
 .timeline__controls {
@@ -14,24 +18,6 @@
   gap: var(--sp-2);
 }
 
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--sp-2);
-  min-height: 44px;
-  padding: 0 var(--sp-4);
-  background: var(--action);
-  color: var(--on-action);
-  border: 1px solid var(--action);
-  border-radius: var(--radius-control);
-  font-weight: 600;
-  transition: transform var(--dur-out) var(--ease-out);
-}
-
-.btn-primary:active {
-  transform: scale(0.97);
-}
 
 .timeline__play {
   min-width: 112px;

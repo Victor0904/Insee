@@ -1,7 +1,11 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { areaDeps } from '../../engine/aggregate'
 import type { ModelData } from '../../engine/types'
+import { zoneDeps } from '../../engine/zones'
+import { placeEvent } from '../../state/actions'
 import { useApp } from '../../state/appStore'
+import { useScenario } from '../../state/scenarioStore'
+import { useDrag } from '../dnd/drag'
 import { useSize } from '../hooks/useSize'
 import { PALETTES, usePrefersReducedMotion, type Theme } from '../theme'
 import { FlowCanvas } from './FlowCanvas'
@@ -31,6 +35,18 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
   const [hover, setHover] = useState<{ d: number; x: number; y: number } | null>(null)
   const [focusDep, setFocusDep] = useState<number | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
+  const placing = useApp((s) => s.placing)
+  const selectedEvent = useApp((s) => s.selectedEvent)
+  const year = useApp((s) => s.year)
+  const events = useScenario((s) => s.scenario.events)
+  const dragOver = useDrag((s) => (s.over?.kind === 'map' ? s.over.dep : null))
+
+  /** Clic ou Entrée sur un département : placer l'événement en attente, sinon choisir la zone. */
+  const activate = (d: number) => {
+    const code = data.departments[d].code
+    if (placing) placeEvent(placing.type, { zone: { level: 'dep', codes: [code] }, start: placing.start ?? year })
+    else select({ level: 'dep', code })
+  }
 
   const projected = useMemo(() => {
     if (!width || !height) return null
@@ -42,6 +58,12 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
     if (!projected || selection.level === 'france') return ''
     return [...selected].map((d) => projected.paths[d]).join(' ')
   }, [projected, selected, selection.level])
+
+  const eventZone = useMemo(() => {
+    if (!projected || !selectedEvent) return ''
+    const ev = events.find((e) => e.uid === selectedEvent)
+    return ev ? zoneDeps(data, ev.zone).map((d) => projected.paths[d]).join(' ') : ''
+  }, [projected, selectedEvent, events, data])
 
   const fmt = (d: number) => `${data.departments[d].name} : ${Number.isFinite(values[d]) ? layer.format(values[d]) : 'donnée indisponible'}`
 
@@ -60,7 +82,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
       setFocusDep(next)
     } else if ((e.key === 'Enter' || e.key === ' ') && focusDep !== null) {
       e.preventDefault()
-      select({ level: 'dep', code: data.departments[focusDep].code })
+      activate(focusDep)
     } else if (e.key === 'Escape') {
       select({ level: 'france' })
     }
@@ -70,7 +92,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
   const signed = layer.kind === 'signed'
 
   return (
-    <div className="map" ref={box}>
+    <div className={`map ${placing ? 'map--placing' : ''}`} ref={box}>
       {projected && (
         <svg
           ref={svgRef}
@@ -98,7 +120,8 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
                 d={p}
                 fill={Number.isFinite(values[d]) ? scale.colors[scale.classOf(values[d])] : 'var(--neutral)'}
                 className="map__dep"
-                onClick={() => select({ level: 'dep', code: data.departments[d].code })}
+                data-dep={d}
+                onClick={() => activate(d)}
                 onMouseMove={(e) => {
                   const r = svgRef.current!.getBoundingClientRect()
                   setHover({ d, x: e.clientX - r.left, y: e.clientY - r.top })
@@ -116,6 +139,8 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           <path d={projected.regionBorders} className="map__regions" />
           <path d={projected.outline} className="map__outline" />
           {selectionOutline && <path d={selectionOutline} className="map__selection" style={{ stroke: palette.selection }} />}
+          {eventZone && <path d={eventZone} className="map__event-zone" />}
+          {dragOver !== null && <path d={projected.paths[dragOver]} className="map__drop" />}
           {focusDep !== null && <path d={projected.paths[focusDep]} className="map__focus" />}
         </svg>
       )}

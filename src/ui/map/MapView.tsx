@@ -23,6 +23,8 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
   const narrow = useMediaQuery('(max-width: 960px)')
   const setPanelOpen = useApp((s) => s.setPanelOpen)
   const panelOpen = useApp((s) => s.panelOpen)
+  const libraryOpen = useApp((s) => s.libraryOpen)
+  const setLibraryOpen = useApp((s) => s.setLibraryOpen)
 
   const layer = layerById(layerId)
   const matrix = useMemo(() => layerMatrix(data, baseline, result, layerId), [data, baseline, result, layerId])
@@ -58,6 +60,16 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
         >
           <Icon name="flows" size={18} />
           Flux
+        </button>
+        <button
+          type="button"
+          className="toggle mapview__library"
+          onClick={() => setLibraryOpen(true)}
+          aria-expanded={libraryOpen}
+          aria-controls="bibliotheque"
+        >
+          <Icon name="map" size={18} />
+          Événements
         </button>
         <button
           type="button"

@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef } from 'react'
 import { useApp } from '../../state/appStore'
 import { Icon } from '../common/Icon'
+import { useScenario } from '../../state/scenarioStore'
+import { EventLanes } from './EventLanes'
 import './Timeline.css'
 
 /** Années par seconde à vitesse ×1. */
@@ -48,6 +50,7 @@ export function Timeline() {
   const setSpeed = useApp((s) => s.setSpeed)
   const horizon = useApp((s) => s.officialHorizon)
   const sliderId = useId()
+  const hasEvents = useScenario((s) => s.scenario.events.length > 0)
   usePlayback()
 
   const { startYear: y0, endYear: y1 } = data
@@ -61,7 +64,7 @@ export function Timeline() {
       <div className="timeline__controls">
         <button
           type="button"
-          className="btn-primary timeline__play"
+          className={`${hasEvents ? 'btn-primary' : 'btn-secondary'} timeline__play`}
           onClick={() => setPlaying(!playing)}
           aria-label={playing ? 'Mettre en pause' : year >= y1 ? 'Rejouer depuis 2025' : 'Lancer le temps'}
         >
@@ -80,6 +83,8 @@ export function Timeline() {
           {year}
         </output>
       </div>
+      <div className="timeline__right">
+      <EventLanes y0={y0} y1={y1} />
       <div className="timeline__track-wrap">
         <div className="timeline__track" aria-hidden="true">
           <div className="timeline__beyond" style={{ left: `${pct(horizon)}%` }} title="Au-delà des projections officielles" />
@@ -105,6 +110,7 @@ export function Timeline() {
           aria-label="Année affichée"
           aria-valuetext={`${year}${year > horizon ? ', au-delà des projections officielles' : ''}`}
         />
+      </div>
       </div>
     </section>
   )

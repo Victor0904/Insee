@@ -145,8 +145,15 @@
   display: none;
 }
 
-.mapview__analysis {
+.mapview__analysis,
+.mapview__library {
   display: none;
+}
+
+@media (max-width: 1200px) {
+  .mapview__library {
+    display: inline-flex;
+  }
 }
 
 @media (max-width: 960px) {

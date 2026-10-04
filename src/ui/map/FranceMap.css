@@ -95,3 +95,28 @@
   pointer-events: none;
   white-space: nowrap;
 }
+
+.map__event-zone {
+  fill: none;
+  stroke: var(--focus);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.map__drop {
+  fill: var(--ink);
+  fill-opacity: 0.25;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  pointer-events: none;
+}
+
+.map--placing .map__dep {
+  cursor: copy;
+}
+
+.map--placing .map__dep:hover {
+  stroke: var(--focus);
+  stroke-width: 2.5;
+}

@@ -2,7 +2,7 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : jalon 2 (4 octobre 2026).
+Dernière mise à jour : jalon 3 (4 octobre 2026).
 
 ---
 
@@ -141,3 +141,56 @@ Valeurs au jalon 1 (écart = moteur − officiel) :
 | Libellés sans jargon | « Seniors pour 100 actifs », « Arrivées moins départs » ; le terme technique s'affiche au survol et au focus (`Term`) |
 
 Limite : les flux affichés sont des flux **nets** de l'année ; les flux bruts, bien plus nombreux, ne sont pas représentés.
+
+## 9. Événements — jalon 3
+
+### Bibliothèque
+
+25 événements déclaratifs (`src/events/library.ts`) : 22 proposés dans la bibliothèque, couvrant les 6 familles demandées, et 3 qui n'apparaissent qu'en conséquence d'un autre (rattrapage des naissances, migration vers le nord, tension sur le logement).
+
+- Les effets sont donnés pour une intensité « forte » (1) et mis à l'échelle par l'intensité choisie : faible 0,3, moyenne 0,6, forte 1, extrême 1,5.
+- **Toutes les valeurs sont des hypothèses de jeu**, marquées `estimated: true` et affichées « valeurs estimées » dans la fiche. Quand un ordre de grandeur historique existe, il est cité :
+  - pandémie : +9 % de décès en 2020, Insee ;
+  - canicule : environ 15 000 décès en excès en août 2003, Inserm ;
+  - ouverture et fermeture migratoires : comparées aux scénarios de l'Insee.
+- Les zones prédéfinies (littoral, Sud, Nord, métropoles, diagonale du vide…) sont des listes de travail du jeu (`src/events/zones.ts`). La « diagonale du vide » n'a pas de définition officielle : la liste de 18 départements est indicative.
+- La « retraite à 67 ans » ne change pas la population, seulement l'indicateur « pression sur les retraites » (nouvel effet `retirementAge`).
+
+### Cascades
+
+Elles sont **déterministes** et dépendent seulement de la frise, pas des résultats. Une règle déclenche un événement dérivé après N années actives du parent, au-dessus d'une intensité minimale ; la profondeur maximale est de 3. Chaque événement dérivé garde `causedBy`.
+
+L'interface rend ces cascades visibles et explicables :
+- sur la frise : bloc pointillé avec « ↳ » ;
+- dans la fiche : « Effets en cascade : … » et la phrase « parce que » ;
+- dans le récit : « conséquence de … ».
+
+Exemple testé : canicules à répétition → crise agricole → migration vers le nord → tension sur le logement.
+
+### Interaction
+
+| Choix | Raison |
+|---|---|
+| Glisser-déposer maison (événements de pointeur) | Souris et tactile ; seuil de 5 px pour qu'un clic reste un clic ; dépôt sur un département (zone) ou sur la frise (date) |
+| Alternative sans glisser : bouton « Placer » | Ouvre un bandeau : clic ou Entrée sur un département, ou bouton « zone conseillée », « Toute la France », zone sélectionnée (WCAG 2.2, 2.5.7) |
+| Blocs de la frise | Glisser pour déplacer, poignée de droite pour la durée ; au clavier : flèches = début, Maj+flèches = durée, Suppr = retirer, Entrée = régler |
+| Fiche de réglage non modale | La carte reste visible et se met à jour pendant le réglage ; les curseurs passent par un **aperçu** non historisé, enregistré au relâchement |
+| Historique illimité (zundo) | Ctrl+Z / Ctrl+Y / Ctrl+Maj+Z, menu « Historique » avec retour à une étape ; seuls le scénario et le libellé de l'action sont historisés |
+| Simulation en continu | Un seul calcul à la fois dans le Worker ; si le scénario change pendant un calcul, seule la dernière version est recalculée (~70 ms) |
+| Carte en « Écart avec la référence » au premier événement | Montre tout de suite l'effet ; ce basculement automatique n'a plus lieu dès que le joueur a choisi une couche lui-même |
+| Éditeur d'événement personnalisé | Curseurs sans jargon (naissances, décès, « des gens partent vers… », arrivées de l'étranger, « qui est concerné ? ») ; l'événement créé rejoint « Mes événements » |
+
+### Récit automatique (`src/story/narrative.ts`)
+
+Le récit choisit les 3 changements les plus marquants de la zone par rapport à la référence. À l'échelle de la France, il compare les régions ; pour une région, ses départements.
+
+Chaque phrase donne :
+1. l'écart (en % et en habitants) ;
+2. la tranche d'âge qui pèse le plus ;
+3. la composante cumulée dominante (naissances, décès, arrivées, départs, étranger) ;
+4. pour les migrations, la **région d'origine ou de destination** principale, tirée des flux simulés comparés à la référence ;
+5. l'événement le plus probablement en cause.
+
+Exemple réel : « Bretagne : + 4,5 % d'habitants (+ 163 781) par rapport à la référence en 2050, surtout des 45-64 ans, venus surtout d'Île-de-France, après « Télétravail généralisé » (2027). »
+
+**Limite :** l'attribution à un événement est heuristique (zone, type d'effet, intensité). La décomposition exacte par contrefactuel arrive au jalon 4 (« D'où vient cet écart ? »).
