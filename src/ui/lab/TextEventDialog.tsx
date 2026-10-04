@@ -4,6 +4,8 @@ import { placeEvent } from '../../state/actions'
 import { useApp } from '../../state/appStore'
 import { newUid, useScenario } from '../../state/scenarioStore'
 import '../library/CustomEventDialog.css'
+
+const EVIDENCE_LABEL = { insee: 'Variante Insee', historique: 'Calé sur l’histoire', hypothese: 'Hypothèse de jeu' } as const
 import './TextEventDialog.css'
 
 /** Pose l'événement décrit : l'événement de la bibliothèque s'il correspond exactement, sinon un événement personnalisé. */
@@ -129,7 +131,7 @@ export function TextEventDialog({ open, onClose }: { open: boolean; onClose: () 
                   </div>
                   <div>
                     <dt>Niveau de preuve</dt>
-                    <dd>{r.libraryMatch ? 'Variante Insee' : 'Hypothèse de jeu'}</dd>
+                    <dd>{EVIDENCE_LABEL[r.evidence]}</dd>
                   </div>
                 </dl>
               )}
