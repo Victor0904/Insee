@@ -362,3 +362,14 @@ Il reste de rares pointes (au plus ~150 ms).
 ### CI
 
 Le workflow `.github/workflows/ci.yml` a été rejoué à l'identique dans un clone vierge du dépôt : `npm ci`, typecheck, lint, 56 tests Vitest, build, 61 parcours Playwright avec `CI=1`. Tout passe.
+
+## 14. Mode test : décrire un événement en une phrase (branche `exp/texte-libre`)
+
+Fonction expérimentale, cachée par défaut. On l'active avec `?test=1` dans l'adresse (retenu sur l'appareil) et on la désactive avec `?test=0`. Elle ajoute « Décrire un événement » sous la bibliothèque.
+
+- **Sans IA ni serveur :** la phrase est analysée sur l'appareil par des règles (`src/lab/parse.ts`) : sujets (naissances, décès, immigration, émigration, déménagements, retraite), sens et force (« très », « double », « −20 % », « plus possible »), public (jeunes, seniors, 20-40 ans, hommes, femmes), lieux (101 départements, régions, zones nommées : grandes villes, campagne, littoral, Sud…) et dates (« à partir de 2030 », « pendant 15 ans », « définitivement »). Gratuit, hors ligne, toujours le même résultat pour la même phrase.
+- **Rien d'inventé :** ce que le modèle ne représente pas (vote, nationalité, économie, logement…) est affiché dans « Pas pris en compte », avec la raison. Le joueur voit la traduction avant de l'ajouter.
+- **Niveau de preuve :** un événement décrit est une « hypothèse de jeu ». Seule exception : si la phrase revient exactement à une variante Insee (aujourd'hui le solde migratoire nul), le jeu pose l'événement officiel de la bibliothèque.
+- **Ordres de grandeur par défaut :** naissances et décès ±10 % (±20-25 % si « fort », ±5 % si « léger ») ; solde avec l'étranger ×0,5 ou ×1,5 (×0 si « plus possible ») ; déménagements 0,3 % des habitants par an ; épisode (épidémie, canicule, guerre) 2 ans, sinon 10 ans. Valeurs bornées quelle que soit la phrase.
+- **Limites :** seules les tournures prévues sont comprises ; le modèle suit le solde avec l'étranger, pas les arrivées seules (« plus personne ne vient » donne un solde nul, alors qu'en réalité il deviendrait négatif).
+- **Tests :** 29 cas Vitest (`tests/lab/parse.test.ts`) dont la phrase d'origine, et 3 parcours Playwright (`e2e/texte-libre.spec.ts`).

@@ -6,6 +6,8 @@ import { useApp } from '../../state/appStore'
 import { useScenario } from '../../state/scenarioStore'
 import { beginDrag } from '../dnd/drag'
 import { EvidenceBadge } from '../common/Evidence'
+import { isTestMode } from '../../lab/flags'
+import { TextEventDialog } from '../lab/TextEventDialog'
 import './LibraryPanel.css'
 
 type Filter = 'tous' | EventDef['family']
@@ -14,6 +16,8 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
   const custom = useScenario((s) => s.scenario.custom)
   const setPlacing = useApp((s) => s.setPlacing)
   const [filter, setFilter] = useState<Filter>('tous')
+  const [testMode] = useState(isTestMode)
+  const [describing, setDescribing] = useState(false)
   const all = [...LIBRARY_VISIBLE, ...custom].filter((e) => !hidden.includes(e.id))
   const families = (['tous', 'insee', 'sante', 'climat', 'economie', 'politique', 'societe', 'imprevu', ...(custom.length ? ['perso'] : [])] as Filter[])
   const shown = filter === 'tous' ? all : all.filter((e) => e.family === filter)
@@ -85,6 +89,15 @@ export function LibraryPanel({ onCreate, hidden = [], compact = false }: { onCre
         <EventIcon name="custom" size={18} />
         Créer mon événement
       </button>
+      {testMode && (
+        <>
+          <button type="button" className="library__create library__create--test" onClick={() => setDescribing(true)}>
+            <EventIcon name="custom" size={18} />
+            Décrire un événement <span className="library__test">test</span>
+          </button>
+          <TextEventDialog open={describing} onClose={() => setDescribing(false)} />
+        </>
+      )}
     </section>
   )
 }
