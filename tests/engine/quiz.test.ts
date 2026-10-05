@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { simulate } from '../../src/engine/simulate'
 import { catalogFor } from '../../src/events/catalog'
-import { answerOf, QUIZ, regionChoices, roundScenario } from '../../src/game/quiz'
+import { answerOf, QUIZ, rankRegions, regionChoices, roundScenario } from '../../src/game/quiz'
 import { PRESETS } from '../../src/game/presets'
 import { emptyScenario, loadAll } from './load'
 
@@ -15,7 +15,14 @@ describe('mode Devine et scénarios célèbres', () => {
       const res = simulate(data, roundScenario(r), cat)
       const a = answerOf(data, base, res, r.question)
       console.info(`[devine] ${r.id} → ${a.id} (${a.detail})`)
-      if (r.question.kind === 'region') expect(regionChoices(data, a.id, i + 1).map((c) => c.id)).toContain(a.id)
+      if (r.question.kind === 'region') {
+        const ranked = rankRegions(data, base, res, r.question).map((x) => x.r.code)
+        const choices = regionChoices(data, ranked, i + 1).map((c) => c.id)
+        expect(choices).toContain(a.id)
+        expect(choices).toHaveLength(4)
+        // pas de région d'outre-mer parmi les choix (trop faciles à écarter)
+        for (const c of choices) expect(Number(c)).toBeGreaterThan(10)
+      }
       else expect(['more', 'less', 'same']).toContain(a.id)
     }
     const ret = QUIZ.find((r) => r.id === 'retraites')!

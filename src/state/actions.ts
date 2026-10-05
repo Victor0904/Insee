@@ -3,7 +3,7 @@ import { catalogFor } from '../events/catalog'
 import { useApp } from './appStore'
 import { useScenario } from './scenarioStore'
 import { useGame } from './gameStore'
-import { challengeById } from '../game/challenges'
+import { challengeById, forbiddenIn } from '../game/challenges'
 
 export const currentCatalog = () => catalogFor(useScenario.getState().scenario)
 export const eventDef = (type: string): EventDef | undefined => currentCatalog().get(type)
@@ -20,8 +20,12 @@ export function placeEvent(type: string, opts: { zone?: Zone; start?: number } =
   const game = useGame.getState()
   const ch = game.mode === 'challenges' && game.challengeId ? challengeById(game.challengeId) : undefined
   if (ch) {
-    if (ch.forbidden?.includes(type)) {
-      game.say(`« ${def.name} » est interdit dans ce défi.`)
+    if (forbiddenIn(ch).includes(type)) {
+      game.say(
+        def.evidence === 'insee'
+          ? `Les variantes Insee sont des cadrages officiels, pas des leviers : elles sont interdites en défi.`
+          : `« ${def.name} » est interdit dans ce défi.`,
+      )
       useApp.setState({ placing: null })
       return null
     }
@@ -32,8 +36,12 @@ export function placeEvent(type: string, opts: { zone?: Zone; start?: number } =
     }
   }
   // une variante officielle se pose par défaut à son année de départ (sauf dépôt sur la frise)
-  const start = Math.min(opts.start ?? def.officialStart ?? app.year, app.data.endYear - 1)
-  const uid = useScenario.getState().addEvent(def, { start, zone: opts.zone })
+  let start = Math.min(opts.start ?? def.officialStart ?? app.year, app.data.endYear - 1)
+  if (ch?.earliestStart && start < ch.earliestStart) start = ch.earliestStart
+  // une variante officielle porte toujours sur toute la France
+  const official = def.evidence === 'insee'
+  if (official && opts.zone && opts.zone.level !== 'france') game.say(`« ${def.name} » est une variante officielle : elle s’applique à toute la France.`)
+  const uid = useScenario.getState().addEvent(def, { start, zone: official ? def.defaults.zone : opts.zone })
   useApp.setState({
     placing: null,
     libraryOpen: false,

@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { catalogFor } from '../../events/catalog'
 import { EventIcon } from '../../events/icons'
-import { DIRECTION_CHOICES, QUIZ, answerOf, regionChoices, roundScenario, type Choice } from '../../game/quiz'
-import { narrate } from '../../story/narrative'
+import { DIRECTION_CHOICES, QUIZ, answerOf, rankRegions, regionChoices, roundScenario, type Choice } from '../../game/quiz'
 import { eventDef } from '../../state/actions'
 import { useApp } from '../../state/appStore'
 import { useGame } from '../../state/gameStore'
@@ -15,7 +13,13 @@ interface Reveal {
   correct: string
   chosen: string
   detail: string
-  story: string | null
+}
+
+interface Past {
+  id: string
+  intro: string
+  ok: boolean
+  correctLabel: string
 }
 
 /** Mode « Devine » : un événement est annoncé, on prédit son effet, puis la carte révèle la réponse. */
@@ -28,6 +32,8 @@ export function GuessPanel() {
   const [score, setScore] = useState(0)
   const [busy, setBusy] = useState(false)
   const [reveal, setReveal] = useState<Reveal | null>(null)
+  const [history, setHistory] = useState<Past[]>([])
+  const [copied, setCopied] = useState(false)
   const [regionChoicesFor, setRegionChoicesFor] = useState<{ index: number; choices: Choice[] } | null>(null)
   const nextRef = useRef<HTMLButtonElement>(null)
   const done = index >= QUIZ.length
@@ -42,7 +48,8 @@ export function GuessPanel() {
     if (done || r.question.kind !== 'region') return
     let alive = true
     simulateDetached(roundScenario(r)).then((res) => {
-      if (alive) setRegionChoicesFor({ index, choices: regionChoices(data, answerOf(data, baseline, res, r.question).id, index + 1) })
+      if (alive && r.question.kind === 'region')
+        setRegionChoicesFor({ index, choices: regionChoices(data, rankRegions(data, baseline, res, r.question).map((x) => x.r.code), index + 1) })
     })
     return () => {
       alive = false
@@ -54,9 +61,9 @@ export function GuessPanel() {
     const sc = roundScenario(round)
     const res = await simulateDetached(sc)
     const a = answerOf(data, baseline, res, round.question)
-    const story = narrate(data, baseline, res, catalogFor(sc), { level: 'france' }, round.question.year - data.startYear)[0]?.text ?? null
     if (chosen === a.id) setScore((s) => s + 1)
-    setReveal({ correct: a.id, chosen, detail: a.detail, story })
+    setReveal({ correct: a.id, chosen, detail: a.detail })
+    setHistory((h) => [...h, { id: round.id, intro: round.intro, ok: chosen === a.id, correctLabel: (choices ?? []).find((c) => c.id === a.id)?.label ?? a.id }])
     // révélation : le scénario de la question s'affiche sur la carte, à l'année de la question
     useScenario.getState().setScenario(sc, `Devine : ${def?.name ?? round.id}`)
     useApp.setState({ year: round.question.year, layer: 'delta', selection: { level: 'france' }, selectedEvent: null, compare: 'off' })
@@ -73,28 +80,66 @@ export function GuessPanel() {
     if (ni >= QUIZ.length) record('devine', { score: score, stars: score >= 7 ? 3 : score >= 5 ? 2 : score >= 3 ? 1 : 0 })
   }
 
-  if (done)
+  if (done) {
+    const stars = score >= 7 ? 3 : score >= 5 ? 2 : score >= 3 ? 1 : 0
+    const verdict =
+      score === QUIZ.length
+        ? 'Parfait : vous avez l’intuition d’un démographe.'
+        : score >= 6
+          ? 'Très bien : les pièges de l’inertie ne vous ont pas eu.'
+          : score >= 4
+            ? 'Pas mal : la démographie réserve des surprises, rejouez pour les déjouer.'
+            : 'La démographie est contre-intuitive : relisez les explications et retentez.'
+    const shareText = `J’ai trouvé ${score} sur ${QUIZ.length} au mode Devine de « Et si… ? », le jeu qui simule la France jusqu’en 2100.${
+      typeof location !== 'undefined' ? ` ${location.origin}${location.pathname}` : ''
+    }`
+    const share = async () => {
+      try {
+        if (navigator.share) await navigator.share({ title: 'Et si… ? — Devine', text: shareText })
+        else {
+          await navigator.clipboard.writeText(shareText)
+          setCopied(true)
+        }
+      } catch {
+        /* partage annulé ou indisponible */
+      }
+    }
     return (
       <section className="game" aria-labelledby="guess-title">
+        <p className="mission__kicker">Devine · récapitulatif</p>
         <h2 id="guess-title" className="game__title">
-          Devine : terminé
+          {score} sur {QUIZ.length} <Stars n={stars} />
         </h2>
-        <p className="mission__goal">
-          Vous avez trouvé <strong>{score}</strong> bonne{score > 1 ? 's' : ''} réponse{score > 1 ? 's' : ''} sur {QUIZ.length}.
-        </p>
+        <p className="mission__goal">{verdict}</p>
+        <ol className="guess__recap">
+          {history.map((h) => (
+            <li key={h.id} className={h.ok ? 'ok' : 'ko'}>
+              <span className="sr-only">{h.ok ? 'Bonne réponse : ' : 'Raté : '}</span>
+              {h.intro} <span className="guess__recap-answer">Réponse : {h.correctLabel}</span>
+            </li>
+          ))}
+        </ol>
         {best && <p className="game__help">Meilleur score : {best.score} sur {QUIZ.length}.</p>}
-        <button
-          type="button"
-          className="btn-primary"
-          onClick={() => {
-            setIndex(0)
-            setScore(0)
-          }}
-        >
-          Rejouer
-        </button>
+        <div className="guess__end">
+          <button type="button" className="btn-secondary" onClick={share}>
+            {copied ? 'Texte copié' : 'Partager mon score'}
+          </button>
+          <button
+            type="button"
+            className="btn-primary"
+            onClick={() => {
+              setIndex(0)
+              setScore(0)
+              setHistory([])
+              setCopied(false)
+            }}
+          >
+            Rejouer
+          </button>
+        </div>
       </section>
     )
+  }
 
   const label = (id: string) => (choices ?? []).find((c) => c.id === id)?.label ?? id
 
@@ -136,7 +181,9 @@ export function GuessPanel() {
           <p>
             <strong>{reveal.chosen === reveal.correct ? 'Bien vu !' : `Raté : c’était « ${label(reveal.correct)} ».`}</strong> {reveal.detail}
           </p>
-          {reveal.story && <p className="guess__story">{reveal.story}</p>}
+          <p className="guess__story">
+            <strong>Pourquoi ?</strong> {round.why}
+          </p>
           <p className="game__help">La carte montre maintenant l’effet de l’événement.</p>
           <button ref={nextRef} type="button" className="btn-primary" onClick={next}>
             {index + 1 < QUIZ.length ? 'Question suivante' : 'Voir mon score'}

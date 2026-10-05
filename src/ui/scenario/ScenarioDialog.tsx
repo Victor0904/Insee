@@ -57,7 +57,7 @@ export function ScenarioDialog({ open, onClose }: { open: boolean; onClose: () =
   }
 
   const share = async () => {
-    const url = await shareUrl(useScenario.getState().scenario)
+    const url = await shareUrl(useScenario.getState().scenario, useApp.getState().year)
     setLink(url)
     try {
       await navigator.clipboard.writeText(url)

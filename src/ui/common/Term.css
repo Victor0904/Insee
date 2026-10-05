@@ -7,12 +7,9 @@
 }
 
 .term__tip {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 6px);
-  z-index: 50;
+  position: fixed;
+  z-index: 300;
   width: max-content;
-  max-width: 260px;
   padding: var(--sp-2) var(--sp-3);
   background: var(--ink);
   color: var(--paper);
@@ -23,24 +20,19 @@
   letter-spacing: 0;
   border-radius: var(--radius-control);
   box-shadow: var(--shadow);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(2px);
-  transition:
-    opacity var(--dur-out) var(--ease-out),
-    transform var(--dur-out) var(--ease-out),
-    visibility 0s linear var(--dur-out);
+  transform: translateY(-100%);
   pointer-events: none;
+  animation: term-in var(--dur-in) var(--ease-in);
 }
 
-.term:hover .term__tip,
-.term:focus-visible .term__tip {
-  opacity: 1;
-  visibility: visible;
+.term__tip--below {
   transform: none;
-  transition:
-    opacity var(--dur-in) var(--ease-in),
-    transform var(--dur-in) var(--ease-in);
+}
+
+@keyframes term-in {
+  from {
+    opacity: 0;
+  }
 }
 
 .estimated-tag {

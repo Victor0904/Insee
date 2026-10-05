@@ -25,7 +25,7 @@ import { Timeline } from '../timeline/Timeline'
 import { HistoryMenu } from './HistoryMenu'
 import { MobileMenu } from './MobileMenu'
 import { ScenarioDialog } from '../scenario/ScenarioDialog'
-import { decodeScenario } from '../../state/persistence'
+import { decodeScenario, loadDraft, saveDraft, sharedYear } from '../../state/persistence'
 import './AppShell.css'
 
 const THEME_NEXT: Record<ThemePref, ThemePref> = { system: 'light', light: 'dark', dark: 'system' }
@@ -84,20 +84,56 @@ export function AppShell() {
   useEffect(() => {
     startRunner()
     // lien de partage : ?s=… contient le scénario compressé
-    const shared = new URLSearchParams(location.search).get('s')
+    const initialSearch = location.search
+    const shared = new URLSearchParams(initialSearch).get('s')
     if (shared) {
       void decodeScenario(shared).then((sc) => {
         const url = new URL(location.href)
         url.searchParams.delete('s')
+        url.searchParams.delete('a')
         history.replaceState(null, '', url.toString())
         if (!sc) return useGame.getState().say('Ce lien de partage est illisible ou incomplet.')
         useScenario.getState().setScenario(sc, `Scénario partagé : ${sc.name}`)
         const app = useApp.getState()
-        useApp.setState({ layer: app.layerTouched ? app.layer : 'delta', year: Math.min(2050, app.data?.endYear ?? 2050) })
+        const d = app.data
+        // l'année du lien (?a=2080) si elle est donnée, sinon 2050
+        const year = (d && sharedYear(initialSearch, d.startYear, d.endYear)) ?? Math.min(2050, d?.endYear ?? 2050)
+        useApp.setState({ layer: app.layerTouched ? app.layer : 'delta', year })
         useGame.getState().say(`Scénario partagé « ${sc.name} » chargé (${sc.events.length} événement(s)).`)
       })
-    } else maybeStartTutorial()
-    return installShortcuts()
+    } else {
+      // brouillon du bac à sable : la recharge de la page reprend le scénario en cours
+      const draft = loadDraft()
+      if (draft) {
+        useScenario.getState().setScenario(draft.scenario, 'Reprise du scénario en cours')
+        const app = useApp.getState()
+        const d = app.data
+        useApp.setState({ layer: app.layerTouched ? app.layer : 'delta', year: d ? Math.max(d.startYear, Math.min(d.endYear, draft.year)) : draft.year })
+        useGame.getState().say('Scénario en cours repris. Ctrl+Z pour repartir d’une carte vierge.')
+      } else maybeStartTutorial()
+    }
+    // enregistrement automatique du bac à sable (pas des défis ni de Devine, qui ont leur propre scénario)
+    let timer = 0
+    const persist = () => {
+      window.clearTimeout(timer)
+      timer = window.setTimeout(() => {
+        if (useGame.getState().mode !== 'sandbox') return
+        saveDraft(useScenario.getState().scenario, useApp.getState().year)
+      }, 400)
+    }
+    const unS = useScenario.subscribe((st, prev) => {
+      if (st.scenario !== prev.scenario) persist()
+    })
+    const unA = useApp.subscribe((st, prev) => {
+      if (st.year !== prev.year && !st.playing) persist()
+    })
+    const unInstall = installShortcuts()
+    return () => {
+      unS()
+      unA()
+      unInstall()
+      window.clearTimeout(timer)
+    }
   }, [])
   const closePanel = useMemo(() => () => setPanelOpen(false), [setPanelOpen])
   const closeLibrary = useMemo(() => () => setLibraryOpen(false), [setLibraryOpen])

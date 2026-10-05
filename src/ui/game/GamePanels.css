@@ -336,3 +336,66 @@
   font-weight: 400;
   color: var(--ink-muted);
 }
+
+.game-card__best {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-12);
+}
+
+.mission__rules .wait::before {
+  content: '•';
+  color: var(--ink-muted);
+}
+
+.meter--time .meter__fill {
+  background: var(--ink-muted);
+}
+
+.mission__run {
+  margin-top: var(--sp-3);
+  width: 100%;
+}
+
+/* Devine : récapitulatif de fin de partie */
+.guess__recap {
+  margin: var(--sp-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--sp-2);
+  font-size: var(--fs-14);
+}
+
+.guess__recap li {
+  display: grid;
+  grid-template-columns: 1.3em 1fr;
+}
+
+.guess__recap li::before {
+  font-weight: 700;
+}
+
+.guess__recap .ok::before {
+  content: '✓';
+  color: var(--gain);
+}
+
+.guess__recap .ko::before {
+  content: '✗';
+  color: var(--loss);
+}
+
+.guess__recap-answer {
+  grid-column: 2;
+  font-size: var(--fs-12);
+  color: var(--ink-muted);
+}
+
+.guess__end {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}

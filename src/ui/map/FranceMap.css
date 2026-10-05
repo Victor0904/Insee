@@ -12,7 +12,8 @@
   border-radius: var(--radius-panel);
 }
 
-.map__dep {
+.map__dep,
+.map__zdep {
   stroke: var(--surface);
   stroke-width: 0.6;
   cursor: pointer;
@@ -22,7 +23,8 @@
   transition: fill 180ms var(--ease-in);
 }
 
-.map__dep:hover {
+.map__dep:hover,
+.map__zdep:hover {
   stroke: var(--ink);
   stroke-width: 1.2;
 }
@@ -112,11 +114,13 @@
   pointer-events: none;
 }
 
-.map--placing .map__dep {
+.map--placing .map__dep,
+.map--placing .map__zdep {
   cursor: copy;
 }
 
-.map--placing .map__dep:hover {
+.map--placing .map__dep:hover,
+.map--placing .map__zdep:hover {
   stroke: var(--focus);
   stroke-width: 2.5;
 }
@@ -131,4 +135,13 @@
   fill: var(--ink-muted);
   font-size: 10px;
   pointer-events: none;
+}
+
+/* Médaillon « Paris et petite couronne » : mêmes départements, à plus grande échelle */
+.map__no-hit {
+  pointer-events: none;
+}
+
+.map__zdep {
+  stroke-width: 0.8;
 }

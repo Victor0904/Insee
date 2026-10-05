@@ -34,6 +34,7 @@ body.is-dragging .lanes {
   position: absolute;
   height: 26px;
   min-width: 26px;
+  container-type: inline-size;
 }
 
 .block {
@@ -74,6 +75,24 @@ body.is-dragging .lanes {
   font-size: var(--fs-14);
 }
 
+/* l'icône ne doit jamais être écrasée (elle devenait un simple tiret devant le nom) */
+.block svg {
+  flex: none;
+}
+
+/* bloc court : l'icône seule, centrée (le nom reste dans l'infobulle et pour les lecteurs d'écran) */
+@container (max-width: 64px) {
+  .block {
+    justify-content: center;
+    padding: 0 8px 0 2px;
+  }
+
+  .block__name,
+  .block__arrow {
+    display: none;
+  }
+}
+
 .block__name {
   white-space: nowrap;
   overflow: hidden;
@@ -111,4 +130,14 @@ body.is-dragging .lanes {
 }
 .block--perso {
   --fam: var(--ink);
+}
+.block--insee {
+  --fam: var(--gain);
+}
+
+/* Écran de faible hauteur : la frise empilée ne doit pas écraser la carte (défilement au-delà de 2 lignes) */
+@media (max-height: 820px) {
+  .lanes {
+    max-height: 64px;
+  }
 }

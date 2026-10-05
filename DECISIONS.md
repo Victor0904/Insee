@@ -2,13 +2,13 @@
 
 Journal des hypothèses du modèle, des choix techniques et des limites connues. Chaque valeur qui n'est pas lue telle quelle dans une source est qualifiée d'**estimée**, ici comme dans l'interface.
 
-Dernière mise à jour : améliorations après le jalon 6 (4 octobre 2026).
+Dernière mise à jour : corrections après le retour de test (5 octobre 2026, § 15).
 
 ---
 
 ## 1. Périmètre
 
-- France métropolitaine : 96 départements regroupés en 13 régions. Les DROM sont prévus dans un jalon optionnel.
+- France entière : 101 départements (96 en métropole, 5 d'outre-mer) regroupés en 18 régions (voir § 13).
 - Pas annuel, du 1er janvier 2025 au 1er janvier 2100. Chaque département est découpé par sexe et par âge simple de 0 à 100 ans, la case 100 regroupant les 100 ans et plus.
 - Point de départ : estimations Insee au 1er janvier 2025. Le 1er janvier 2026 sert de contrôle à un an.
 
@@ -379,3 +379,59 @@ Fonction expérimentale, cachée par défaut. On l'active avec `?test=1` dans l'
 - **Ordres de grandeur par défaut :** naissances et décès ±10 % (±20-25 % si « fort », ±5 % si « léger ») ; solde avec l'étranger ×0,5 ou ×1,5 (×0 si « plus possible ») ; déménagements 0,3 % des habitants par an ; épisode (épidémie, canicule, guerre) 2 ans, sinon 10 ans. Valeurs bornées quelle que soit la phrase.
 - **Limites :** seules les tournures prévues sont comprises ; le modèle suit le solde avec l'étranger, pas les arrivées seules (« plus personne ne vient » donne un solde nul, alors qu'en réalité il deviendrait négatif).
 - **Tests :** 48 cas Vitest (`tests/lab/parse.test.ts`) dont la phrase d'origine, et 3 parcours Playwright (`e2e/texte-libre.spec.ts`). Une sonde de 40 phrases variées a servi à trouver les tournures mal comprises ; elles sont reprises dans les tests.
+
+
+## 15. Corrections après le retour de test du 4 octobre 2026
+
+Retour de test complet (tutoriel, bac à sable, défis, Devine, scénarios, partage, éditeur). Ce qui a changé :
+
+### Modèle
+
+- **L'outre-mer n'est plus une zone refuge.** Avec « Montée des eaux », La Réunion gagnait +8 % d'habitants « venus surtout de PACA » ; avec les canicules, les Antilles et La Réunion gagnaient aussi.
+  - Les cinq départements d'outre-mer entrent dans la zone **Littoral** (31 départements) : ce sont des îles ou une bande côtière.
+  - Dans le moteur, depuis un département de métropole : quand l'attractivité d'une zone baisse, les parts libérées sont redistribuées **entre destinations de métropole seulement** (la part vers l'outre-mer garde sa valeur) ; les départs supplémentaires des événements « des gens partent » vont vers la métropole. Les échanges habituels avec l'outre-mer ne changent pas. Test : aucun DOM ne gagne plus de 0,5 % avec la montée des eaux, les canicules ou la sécheresse.
+- **Fuite des déménagements corrigée.** Les parts de destination, arrondies dans `migration_internal.json`, ne sommaient pas exactement à 1 : la France « perdait » quelques personnes par an (−5 sur une année, ~70 en cumul). Elles sont renormalisées à la compilation ; une origine sans destination connue (Mayotte) n'a plus de départs (sinon ils disparaissaient). Test : arrivées = départs à moins d'une personne.
+- **Fécondité haute et basse (Insee) :** le multiplicateur est recalculé chaque année pour viser l'indicateur cible (1,70 ou 1,20) au lieu de multiplier par 1,17 une fécondité de référence qui baisse encore jusqu'en 2028. En 2070 : +5,04 M contre +4,95 M publiés (avant : +5,3 M).
+- **Variantes Insee verrouillées :** intensité « forte » et toute la France. Un scénario importé qui les règle autrement affiche « Hors cadre Insee » au lieu du badge officiel.
+- **Montée des eaux adoucie et signalée :** départs 0,4 % par an (au lieu de 0,6 %) et 25 % d'arrivées en moins (au lieu de 40 %). À intensité forte, la Bretagne perd environ 10 % en 2070 (−17,9 % avant) ; la fiche dit que c'est un scénario volontairement marqué.
+
+### Défis
+
+- **Règles communes :** variantes Insee interdites (ce sont des cadrages, pas des leviers) ; intensité « forte » au plus (sauf événement imposé).
+- **Garde-fous** contre les effets de bord, selon le défi : au plus 250 000 arrivées nettes de l'étranger par an, aucun département ne perd plus de 3 % ou ne gagne plus de 10 %, France sans perte de plus de 0,5 %. « Desserrer l'Île-de-France » n'accepte que des politiques et des choix de société ; « Résister à la pandémie » impose de réagir après coup (2031 au plus tôt).
+- **Cibles recalées** pour qu'aucune carte seule ne suffise : un test essaie chaque événement seul (intensité forte, zone par défaut, toute la France ou la zone visée, durée 1 an, par défaut ou jusqu'à l'année du défi).
+
+| Défi | Cible | Garde-fou | Solution testée |
+|---|---|---|---|
+| Des bras pour les retraites | ≥ 1,72 actif par senior (2070) | ≤ 250 000 arrivées/an | 1,73 |
+| Sauver la Creuse | ≥ 100 000 hab. (2100) | aucun département à −3 % | 107 130 |
+| Repeupler la diagonale (sans exode urbain) | 2025 + 10 % (2060) | — | 4,8 M |
+| Pas de déclin | ≥ population 2025, 68,9 M (2100) | ≤ 250 000 arrivées/an | 69,9 M |
+| Des enfants dans les écoles | ≥ 5,4 M (2050) | ≤ 250 000 arrivées/an | 5,6 M |
+| Desserrer l'Île-de-France | ≤ 11,5 M (2050) | France ≥ −0,5 %, aucun département à +10 % | 11,3 M |
+| Des retraites tenables (2 événements) | ≤ 53 (2070, référence 66) | — | 51,2 |
+| Rajeunir la France | ≤ 50,5 ans (2070, référence 51,6) | ≤ 250 000 arrivées/an | 50,1 ans |
+| Résister à la pandémie | référence + 1,2 M (2040) | ≤ 200 000 arrivées/an, début ≥ 2031 | +1,4 M |
+
+- **Suspense :** le résultat n'est révélé que quand le temps (lecture ou curseur) atteint l'année du défi avec le scénario actuel ; toute modification le masque de nouveau.
+- **Meilleur score** affiché sur la carte du défi (« Meilleur : 980 points ») ; l'ancien identifiant `soixante-six` devient `pas-de-declin` (score repris).
+
+### Devine
+
+- Après la réponse, une explication propre à la question (« Pourquoi ? ») remplace le premier élément du récit automatique, qui parlait souvent d'autre chose (Mayotte, la Bourgogne).
+- Écart d'âge médian en mois ou en années, seniors en points, naissances et habitants en nombre.
+- Questions « quelle région » limitées aux 13 régions de métropole ; les choix sont la bonne réponse, les deux suivantes du classement et une autre au hasard.
+- Écran final : étoiles, verdict, récapitulatif des 8 questions et bouton de partage.
+
+### Interface
+
+- Bug : un calcul lancé avant une annulation qui vidait le scénario écrasait ensuite la référence (frise vide, carte à −6 204 habitants). Chaque calcul porte un numéro ; seul le dernier demandé s'affiche.
+- Tutoriel : l'étape 1 laisse la référence se dérouler (jusqu'en 2100, ou jusqu'à la pause après 2035). La bulle se range à gauche, sous la bibliothèque, sur grand écran.
+- Infobulles des termes rendues hors du panneau, en position fixe : plus de barre de défilement horizontale ni de texte coupé.
+- Frise : l'icône d'un bloc n'est plus écrasée en tiret ; un bloc court n'affiche que son icône.
+- Médaillon « Paris et proche banlieue » cliquable (dépôt possible) ; la liste « Zone » propose les 101 départements.
+- Chiffres : le zéro barré d'Atkinson Hyperlegible se lisait 6 ou 8 ; les chiffres viennent d'Inter (zéro plein), sous-ensemble 0-9 de 1,6 Ko (`src/design/fonts`, licence OFL).
+- Légende : seuils fixes par couche (écart à la référence : ±0,5 / 2 / 5 / 10 %), hachures de baisse graduées.
+- Lien de partage : `?a=2080` ouvre le scénario à l'année affichée au moment du partage.
+- Bac à sable enregistré automatiquement dans le navigateur et repris après une recharge (Ctrl+Z pour repartir d'une carte vierge).
+- Écran de faible hauteur : cartes de la bibliothèque compactes, frise limitée à 2 lignes visibles.

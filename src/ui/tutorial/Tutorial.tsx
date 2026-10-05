@@ -24,10 +24,15 @@ const panelNarrow = () => matchMedia('(max-width: 960px)').matches
 const STEPS: Step[] = [
   {
     title: 'Voici la France de 2025',
-    body: 'Lancez le temps pour voir le futur prévu par l’Insee, sans aucun événement.',
+    body: 'Lancez le temps pour voir le futur prévu par l’Insee, sans aucun événement, jusqu’en 2100 (le bouton ×1 accélère). Mettez en pause quand vous voulez passer à la suite.',
     target: '.timeline__play',
     prepare: () => useApp.setState({ year: 2025, playing: false, selection: { level: 'france' } }),
-    done: () => useApp.getState().year >= 2035,
+    // on laisse la référence se dérouler : l'étape est franchie au bout de la frise, ou à la pause
+    // une fois quelques années écoulées (avant, elle ramenait en 2025 dès 2035)
+    done: () => {
+      const { year, playing, data } = useApp.getState()
+      return year >= (data?.endYear ?? 2100) || (!playing && year >= 2035)
+    },
   },
   {
     title: 'Et si… le télétravail se généralisait ?',
@@ -37,7 +42,7 @@ const STEPS: Step[] = [
       useApp.setState({ playing: false, year: 2025, libraryOpen: narrow() })
       setMode('sandbox')
       useApp.setState({ libraryOpen: narrow() })
-      document.querySelector('.ev-card--societe')?.scrollIntoView({ block: 'center' })
+      document.querySelector('.ev-card--societe')?.scrollIntoView({ block: 'start' })
     },
     done: () => useScenario.getState().scenario.events.some((e) => e.type === 'teletravail'),
   },
@@ -119,7 +124,6 @@ export function Tutorial() {
       if (fired || !st.done?.()) return
       fired = true
       go(step + 1)
-      if (step === 0) useApp.setState({ playing: false })
     }
     const unA = useApp.subscribe(check)
     const unS = useScenario.subscribe(check)

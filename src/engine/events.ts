@@ -138,7 +138,9 @@ export function fillModifiers(data: ModelData, m: YearModifiers, events: Compile
           break
         }
         case 'fertility': {
-          const mult = Math.max(0, 1 + (eff.mult - 1) * e)
+          const yi = Math.max(0, Math.min(data.nYears - 1, y - data.startYear))
+          const target = eff.targetIcf && data.icfRef[yi] > 0 ? eff.targetIcf / data.icfRef[yi] : eff.mult
+          const mult = Math.max(0, 1 + (target - 1) * e)
           for (const d of deps) for (let a = lo; a <= hi; a++) m.fertMult[d * AGES + a] *= mult
           break
         }

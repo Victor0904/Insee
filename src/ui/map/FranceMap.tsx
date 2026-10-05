@@ -13,6 +13,14 @@ import { neighborInDirection, projectAll, type MapGeometry } from './geo'
 import type { ClassScale, LayerDef } from './layers'
 import './FranceMap.css'
 
+/** Hachures des 4 classes de baisse (de la plus forte à la plus faible). */
+export const HATCH = [
+  { gap: 3, width: 1.4 },
+  { gap: 4, width: 1.1 },
+  { gap: 6, width: 1 },
+  { gap: 9, width: 0.9 },
+]
+
 interface Props {
   data: ModelData
   geom: MapGeometry
@@ -111,9 +119,12 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           onMouseLeave={() => setHover(null)}
         >
           <defs>
-            <pattern id="hatch-loss" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-              <line x1="0" y1="0" x2="0" y2="5" className="map__hatch" />
-            </pattern>
+            {/* hachures de baisse graduées : plus la perte est forte, plus elles sont serrées et épaisses */}
+            {HATCH.map((h, i) => (
+              <pattern key={i} id={`hatch-loss-${i}`} width={h.gap} height={h.gap} patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <line x1="0" y1="0" x2="0" y2={h.gap} className="map__hatch" style={{ strokeWidth: h.width }} />
+              </pattern>
+            ))}
           </defs>
           <g className="map__insets" aria-hidden="true">
             {projected.insets.map((b) => (
@@ -144,7 +155,7 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           {signed && (
             <g className="map__hatches" aria-hidden="true">
               {projected.paths.map((p, d) =>
-                values[d] < -1e-9 && scale.classOf(values[d]) < 4 ? <path key={d} d={p} fill="url(#hatch-loss)" /> : null,
+                values[d] < -1e-9 && scale.classOf(values[d]) < 4 ? <path key={d} d={p} fill={`url(#hatch-loss-${scale.classOf(values[d])})`} /> : null,
               )}
             </g>
           )}
@@ -154,6 +165,49 @@ export function FranceMap({ data, geom, values, scale, layer, theme, flows, flow
           {eventZone && <path d={eventZone} className="map__event-zone" />}
           {dragOver !== null && <path d={projected.paths[dragOver]} className="map__drop" />}
           {focusDep !== null && <path d={projected.paths[focusDep]} className="map__focus" />}
+          {projected.zoom && (
+            <g className="map__zoom">
+              <clipPath id="zoom-clip">
+                <rect x={projected.zoom.x} y={projected.zoom.y} width={projected.zoom.w} height={projected.zoom.h - 14} rx={3} />
+              </clipPath>
+              <rect x={projected.zoom.x} y={projected.zoom.y} width={projected.zoom.w} height={projected.zoom.h} rx={3} className="map__inset" />
+              <g clipPath="url(#zoom-clip)">
+                {projected.zoom.paths.map(({ index: d, d: p }) => (
+                  <path
+                    key={d}
+                    d={p}
+                    fill={Number.isFinite(values[d]) ? scale.colors[scale.classOf(values[d])] : 'var(--neutral)'}
+                    className="map__zdep"
+                    data-dep={d}
+                    onClick={() => activate(d)}
+                    onMouseMove={(e) => {
+                      const r = svgRef.current!.getBoundingClientRect()
+                      setHover({ d, x: e.clientX - r.left, y: e.clientY - r.top })
+                    }}
+                  />
+                ))}
+                {signed &&
+                  projected.zoom.paths.map(({ index: d, d: p }) =>
+                    values[d] < -1e-9 && scale.classOf(values[d]) < 4 ? (
+                      <path key={`h${d}`} d={p} fill={`url(#hatch-loss-${scale.classOf(values[d])})`} className="map__no-hit" />
+                    ) : null,
+                  )}
+                {projected.zoom.paths
+                  .filter(({ index: d }) => selected.has(d) && selection.level !== 'france')
+                  .map(({ index: d, d: p }) => (
+                    <path key={`s${d}`} d={p} className="map__selection map__no-hit" style={{ stroke: palette.selection }} />
+                  ))}
+                {projected.zoom.paths
+                  .filter(({ index: d }) => d === dragOver || d === focusDep)
+                  .map(({ index: d, d: p }) => (
+                    <path key={`o${d}`} d={p} className={`${d === dragOver ? 'map__drop' : 'map__focus'} map__no-hit`} />
+                  ))}
+              </g>
+              <text x={projected.zoom.x + projected.zoom.w / 2} y={projected.zoom.y + projected.zoom.h - 4} textAnchor="middle" className="map__inset-label">
+                Paris et proche banlieue
+              </text>
+            </g>
+          )}
         </svg>
       )}
       {projected && showFlows && flows && !decorative && (

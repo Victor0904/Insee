@@ -7,6 +7,8 @@ import { NAMED_ZONES } from '../../events/zones'
 import { eventDef, removeEvent } from '../../state/actions'
 import { useApp } from '../../state/appStore'
 import { useScenario } from '../../state/scenarioStore'
+import { useGame } from '../../state/gameStore'
+import { CHALLENGE_MAX_INTENSITY, challengeById } from '../../game/challenges'
 import { Icon } from '../common/Icon'
 import { EvidenceBadge } from '../common/Evidence'
 import './EventInspector.css'
@@ -26,6 +28,7 @@ export function EventInspector() {
   const result = useApp((s) => s.result)
   const selection = useApp((s) => s.selection)
   const ev = useScenario((s) => (s.preview ?? s.scenario).events.find((e) => e.uid === uid))
+  const challengeId = useGame((s) => (s.mode === 'challenges' ? s.challengeId : null))
   const titleId = useId()
   const closeRef = useRef<HTMLButtonElement>(null)
 
@@ -43,14 +46,27 @@ export function EventInspector() {
     return () => window.removeEventListener('keydown', onKey)
   }, [uid, selectEvent])
 
+  // zones proposées, par groupe : zones du jeu, régions, départements (pour corriger un dépôt
+  // tombé sur le voisin, par exemple l'Essonne au lieu de Paris)
   const zones = useMemo(() => {
-    const opts: { key: string; label: string; zone: Zone }[] = NAMED_ZONES.map((z) => ({ key: zoneKey(z.zone), label: z.label, zone: z.zone }))
-    for (const r of data.regions) if (!opts.some((o) => o.key === zoneKey({ level: 'region', codes: [r.code] }))) opts.push({ key: zoneKey({ level: 'region', codes: [r.code] }), label: r.name, zone: { level: 'region', codes: [r.code] } })
-    if (selection.level === 'dep')
-      opts.push({ key: zoneKey({ level: 'dep', codes: [selection.code] }), label: `${zoneLabel(data, { level: 'dep', codes: [selection.code] })} (sélection)`, zone: { level: 'dep', codes: [selection.code] } })
-    if (ev && !opts.some((o) => o.key === zoneKey(ev.zone))) opts.push({ key: zoneKey(ev.zone), label: zoneLabel(data, ev.zone), zone: ev.zone })
+    type Opt = { key: string; label: string; zone: Zone; group: 'named' | 'region' | 'dep' | 'other' }
+    const opts: Opt[] = NAMED_ZONES.map((z) => ({ key: zoneKey(z.zone), label: z.label, zone: z.zone, group: 'named' }))
+    const push = (o: Opt) => {
+      if (!opts.some((x) => x.key === o.key)) opts.push(o)
+    }
+    for (const r of [...data.regions].sort((a, b) => a.name.localeCompare(b.name, 'fr')))
+      push({ key: zoneKey({ level: 'region', codes: [r.code] }), label: r.name, zone: { level: 'region', codes: [r.code] }, group: 'region' })
+    for (const d of data.departments)
+      push({ key: zoneKey({ level: 'dep', codes: [d.code] }), label: `${d.code} · ${d.name}${selection.level === 'dep' && selection.code === d.code ? ' (sélection)' : ''}`, zone: { level: 'dep', codes: [d.code] }, group: 'dep' })
+    if (ev) push({ key: zoneKey(ev.zone), label: zoneLabel(data, ev.zone), zone: ev.zone, group: 'other' })
     return opts
   }, [data, selection, ev])
+  const groups = [
+    { id: 'named', label: 'Zones du jeu' },
+    { id: 'other', label: 'Zone actuelle' },
+    { id: 'region', label: 'Régions' },
+    { id: 'dep', label: 'Départements' },
+  ] as const
 
   if (!uid || !ev) return null
   const def = eventDef(ev.type)
@@ -62,6 +78,12 @@ export function EventInspector() {
   const spawned = (result?.events ?? []).filter((e) => e.causedBy === ev.uid)
   const pulse = def.profile === 'pulse'
   const nearest = INTENSITIES.reduce((a, b) => (Math.abs(b.v - ev.intensity) < Math.abs(a.v - ev.intensity) ? b : a)).v
+  // Variante Insee : intensité et zone verrouillées (sinon elle sort du cadre officiel tout en
+  // gardant son badge). En défi, l'intensité est plafonnée à « forte » sauf pour un événement imposé.
+  const official = def.evidence === 'insee'
+  const challenge = challengeId ? challengeById(challengeId) : undefined
+  const capped = !!challenge && !(challenge.required ?? []).includes(def.id)
+  const intensities = INTENSITIES.filter((i) => !capped || i.v <= CHALLENGE_MAX_INTENSITY || i.v === nearest)
 
   return (
     <section className="inspector" role="dialog" aria-modal="false" aria-labelledby={titleId}>
@@ -74,7 +96,7 @@ export function EventInspector() {
             {def.name}
           </h2>
           <p className="inspector__summary">{def.summary}</p>
-          <EvidenceBadge def={def} />
+          <EvidenceBadge def={def} ev={ev} />
         </div>
         <button ref={closeRef} type="button" className="icon-btn" onClick={() => selectEvent(null)} aria-label="Fermer la fiche">
           <Icon name="close" />
@@ -113,10 +135,19 @@ export function EventInspector() {
             {def.persistent && <span className="field__hint">L’effet se maintient après la fin.</span>}
           </label>
         )}
+        {official ? (
+          <p className="field inspector__locked">
+            <span className="field__label">Intensité et zone</span>
+            <span>
+              <strong>Officielles</strong> : toute la France, au niveau de la variante Insee. Pour explorer d’autres réglages, utilisez un événement
+              comme « Politique nataliste » ou « Ouverture migratoire ».
+            </span>
+          </p>
+        ) : (
         <fieldset className="field">
           <legend className="field__label">Intensité</legend>
           <div className="segmented">
-            {INTENSITIES.map((i) => (
+            {intensities.map((i) => (
               <label key={i.v} className="segmented__opt">
                 <input
                   type="radio"
@@ -128,7 +159,10 @@ export function EventInspector() {
               </label>
             ))}
           </div>
+          {capped && <span className="field__hint">En défi, l’intensité va jusqu’à « forte ».</span>}
         </fieldset>
+        )}
+        {!official && (
         <label className="field">
           <span className="field__label">Zone</span>
           <select
@@ -139,14 +173,22 @@ export function EventInspector() {
               if (z) commit({ zone: z.zone }, `Zone : ${def.name} (${z.label})`)
             }}
           >
-            {zones.map((z) => (
-              <option key={z.key} value={z.key}>
-                {z.label}
-              </option>
-            ))}
+            {groups.map((g) => {
+              const list = zones.filter((z) => z.group === g.id)
+              return list.length ? (
+                <optgroup key={g.id} label={g.label}>
+                  {list.map((z) => (
+                    <option key={z.key} value={z.key}>
+                      {z.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ) : null
+            })}
           </select>
           <span className="field__hint">Ou glissez de nouveau une carte de la bibliothèque sur un département.</span>
         </label>
+        )}
       </div>
 
       {spawned.length > 0 && (

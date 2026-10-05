@@ -92,7 +92,8 @@ export async function exportMapPng(o: PngOptions): Promise<Blob> {
       ctx.clip()
       ctx.strokeStyle = 'rgba(0,0,0,0.35)'
       ctx.lineWidth = 1
-      for (let k = -14; k < 22; k += 4) {
+      const gap = [3, 4, 6, 9][i] ?? 4
+      for (let k = -14; k < 22; k += gap) {
         ctx.beginPath()
         ctx.moveTo(lx + k, ly + 14)
         ctx.lineTo(lx + k + 14, ly)

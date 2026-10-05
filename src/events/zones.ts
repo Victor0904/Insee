@@ -8,10 +8,17 @@ import type { Zone } from '../engine/types'
 
 export const FRANCE: Zone = { level: 'france', codes: [] }
 
-/** Départements de métropole ayant une façade maritime (Manche, Atlantique, Méditerranée). */
+/**
+ * Départements ayant une façade maritime (Manche, Atlantique, Méditerranée), outre-mer compris :
+ * les cinq départements d'outre-mer sont des îles ou une bande côtière (Guyane) et sont donc
+ * exposés comme le reste du littoral.
+ */
 export const LITTORAL: Zone = {
   level: 'dep',
-  codes: ['59', '62', '80', '76', '27', '14', '50', '35', '22', '29', '56', '44', '85', '17', '33', '40', '64', '66', '11', '34', '30', '13', '83', '06', '2A', '2B'],
+  codes: [
+    '59', '62', '80', '76', '27', '14', '50', '35', '22', '29', '56', '44', '85', '17', '33', '40', '64', '66', '11', '34', '30', '13', '83', '06', '2A', '2B',
+    '971', '972', '973', '974', '976',
+  ],
 }
 
 /** Départements et régions d'outre-mer. */
@@ -56,7 +63,7 @@ export const CAPITALES_REGIONALES: Zone = {
 export const NAMED_ZONES: { id: string; label: string; zone: Zone; note: string }[] = [
   { id: 'france', label: 'Toute la France', zone: FRANCE, note: '101 départements, outre-mer compris' },
   { id: 'outre-mer', label: 'Outre-mer', zone: OUTRE_MER, note: 'Guadeloupe, Martinique, Guyane, La Réunion, Mayotte' },
-  { id: 'littoral', label: 'Littoral', zone: LITTORAL, note: '26 départements de métropole avec une façade maritime' },
+  { id: 'littoral', label: 'Littoral', zone: LITTORAL, note: '31 départements avec une façade maritime, outre-mer compris' },
   { id: 'sud', label: 'Sud', zone: SUD, note: 'Occitanie, Provence-Alpes-Côte d’Azur, Corse' },
   { id: 'nord', label: 'Nord', zone: NORD, note: 'Hauts-de-France, Normandie, Bretagne, Grand Est' },
   { id: 'metropoles', label: 'Grandes métropoles', zone: METROPOLES, note: '15 départements des grandes villes' },

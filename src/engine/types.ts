@@ -108,11 +108,15 @@ export interface ModelData {
   departments: DepartmentMeta[]
   regions: RegionMeta[]
   regionIndex: Int8Array // dep -> indice de région
+  /** 1 pour les départements d'outre-mer (codes 97x), 0 en métropole. */
+  overseas: Uint8Array
   areaKm2: Float64Array
   pop0: Float64Array // n*2*101
   q: Float64Array // (s*Y + y)*101 + âge atteint
   mortFactor: Float64Array // d*2 + s
   fert: Float64Array // y*101 + âge atteint
+  /** Indicateur conjoncturel de fécondité national de la référence, par année. */
+  icfRef: Float64Array
   fertGroupOfAge: Int8Array // âge atteint -> classe (−1 hors 12..55)
   nFertGroups: number
   fertFactor: Float64Array // d*nFertGroups + g
@@ -144,7 +148,12 @@ export type AgeRange = [number, number]
 /** Effet élémentaire d'un événement. Les valeurs sont données à intensité 1. */
 export type Effect =
   | { kind: 'mortality'; mult: number; ages?: AgeRange; sex?: 0 | 1 }
-  | { kind: 'fertility'; mult: number; ages?: AgeRange }
+  /**
+   * Naissances multipliées par `mult`. Avec `targetIcf`, le multiplicateur est recalculé chaque
+   * année pour amener l'indicateur de fécondité national de la référence à cette cible
+   * (`mult` est alors la valeur indicative au niveau de long terme).
+   */
+  | { kind: 'fertility'; mult: number; ages?: AgeRange; targetIcf?: number }
   /** Départs supplémentaires de la zone (fraction de la population par an), destinations habituelles. */
   | { kind: 'leave'; rate: number; ages?: AgeRange }
   /** Attractivité de la zone comme destination des migrations internes (multiplicateur). */

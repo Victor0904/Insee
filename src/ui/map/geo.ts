@@ -41,13 +41,32 @@ export interface Inset {
   h: number
 }
 
+/**
+ * Médaillon zoomé sur Paris et la petite couronne : les départements y sont dessinés une seconde
+ * fois, à plus grande échelle, et restent cliquables (sinon un dépôt sur Paris tombe à côté).
+ */
+export interface Zoom {
+  x: number
+  y: number
+  w: number
+  h: number
+  name: string
+  /** Tracés des départements visibles dans le médaillon (indice du département → tracé). */
+  paths: { index: number; d: string }[]
+}
+
 export interface Projected {
   paths: string[]
   centroids: [number, number][]
   regionBorders: string
   outline: string
   insets: Inset[]
+  zoom: Zoom | null
 }
+
+/** Paris et petite couronne (cadrage du médaillon), puis grande couronne (contexte, rognée). */
+const ZOOM_CORE = ['75', '92', '93', '94']
+const ZOOM_RING = ['77', '78', '91', '95']
 
 const LABEL_H = 14
 
@@ -58,12 +77,18 @@ const LABEL_H = 14
 export function projectAll(geom: MapGeometry, width: number, height: number, pad = 12): Projected {
   const drom = geom.features.map((f, i) => ({ f, i })).filter((x) => geom.isDrom[x.i])
   const metro = geom.features.filter((_, i) => !geom.isDrom[i])
-  // rangée de médaillons en haut de la carte (la légende occupe le coin inférieur gauche)
+  const code = (i: number) => String(geom.features[i].id)
+  const core = geom.features.map((_, i) => i).filter((i) => ZOOM_CORE.includes(code(i)))
+  const ring = geom.features.map((_, i) => i).filter((i) => ZOOM_RING.includes(code(i)))
+  const withZoom = core.length === ZOOM_CORE.length
+  // rangée de médaillons en haut de la carte (la légende occupe le coin inférieur gauche) :
+  // les cinq départements d'outre-mer, puis Paris et la petite couronne
   const gap = 8
   const insets: Inset[] = []
-  const w = Math.min(110, (width - 2 * pad - gap * (drom.length - 1)) / drom.length)
+  const slots = drom.length + (withZoom ? 1 : 0)
+  const w = Math.min(110, (width - 2 * pad - gap * (slots - 1)) / slots)
   const h = Math.max(52, Math.min(84, height * 0.14))
-  const x0 = pad + (width - 2 * pad - (w * drom.length + gap * (drom.length - 1))) / 2
+  const x0 = pad + (width - 2 * pad - (w * slots + gap * (slots - 1))) / 2
   drom.forEach(({ f, i }, k) => insets.push({ index: i, name: f.properties.name, x: x0 + k * (w + gap), y: pad, w, h }))
   const metroBox: [[number, number], [number, number]] = [
     [pad, pad + h + gap],
@@ -96,7 +121,30 @@ export function projectAll(geom: MapGeometry, width: number, height: number, pad
     paths[i] = p(f) ?? ''
     centroids[i] = p.centroid(f) as [number, number]
   })
-  return { paths, centroids, regionBorders: metroPath(geom.regionBorders) ?? '', outline: metroPath(geom.outline) ?? '', insets }
+  let zoom: Zoom | null = null
+  if (withZoom) {
+    const zx = x0 + drom.length * (w + gap)
+    const zproj = geoConicConformal()
+      .parallels([44, 49])
+      .rotate([-3, 0])
+      .fitExtent(
+        [
+          [zx + 4, pad + 4],
+          [zx + w - 4, pad + h - LABEL_H - 2],
+        ],
+        { type: 'FeatureCollection', features: core.map((i) => geom.features[i]) },
+      )
+    const zp = geoPath(zproj)
+    zoom = {
+      x: zx,
+      y: pad,
+      w,
+      h,
+      name: 'Paris et petite couronne',
+      paths: [...ring, ...core].map((i) => ({ index: i, d: zp(geom.features[i]) ?? '' })),
+    }
+  }
+  return { paths, centroids, regionBorders: metroPath(geom.regionBorders) ?? '', outline: metroPath(geom.outline) ?? '', insets, zoom }
 }
 
 /** Département voisin dans une direction (flèches du clavier), d'après les centroïdes. */

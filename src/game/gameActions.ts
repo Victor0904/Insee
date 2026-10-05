@@ -34,13 +34,23 @@ export function startChallenge(id: string) {
   const ch = challengeById(id)
   const app = useApp.getState()
   if (!ch || !app.data) return
-  useGame.setState({ mode: 'challenges', challengeId: id })
+  useGame.setState({ mode: 'challenges', challengeId: id, revealedFor: null })
   const events = (CHALLENGE_START[id] ?? []).map((e) => ({ ...e, uid: newUid() }))
   show({ ...emptyScenario(), name: `Défi : ${ch.title}`, events }, `Début du défi : ${ch.title}`, app.data.startYear)
 }
 
 export function leaveChallenge() {
-  useGame.setState({ challengeId: null })
+  useGame.setState({ challengeId: null, revealedFor: null })
+}
+
+/** Lance le temps pour révéler le résultat du défi (depuis le début si l'année est déjà dépassée). */
+export function runChallenge() {
+  const id = useGame.getState().challengeId
+  const ch = id ? challengeById(id) : undefined
+  const app = useApp.getState()
+  if (!ch || !app.data) return
+  if (app.year >= ch.year) useApp.setState({ year: app.data.startYear })
+  useApp.getState().setPlaying(true)
 }
 
 export function loadPreset(id: string) {

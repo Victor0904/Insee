@@ -35,9 +35,9 @@ python -m venv .venv-data
 
 ## Ce qu'on peut faire
 
-- **Carte de France** des 101 départements, outre-mer en médaillons, avec 6 couches (écart à la référence, évolution, âge médian, seniors pour 100 actifs, arrivées moins départs, densité) et les déménagements animés.
+- **Carte de France** des 101 départements, outre-mer et Paris avec sa petite couronne en médaillons, avec 6 couches à échelle fixe (écart à la référence, évolution, âge médian, seniors pour 100 actifs, arrivées moins départs, densité) et les déménagements animés.
 - **Frise 2025-2100** : lecture, pause, vitesse ; les événements y sont des blocs qu'on déplace et qu'on allonge.
-- **32 événements** et un éditeur pour créer les siens, avec des **cascades** visibles (canicules → crise agricole → migration vers le nord → logement). Chacun affiche son **niveau de preuve** : 7 reproduisent des variantes officielles de l'Insee, 2 sont calés sur l'histoire (2020, 2003), les autres sont des hypothèses de jeu.
+- **33 événements** (30 dans la bibliothèque, 3 déclenchés seulement par des cascades) et un éditeur pour créer les siens, avec des **cascades** visibles (canicules → crise agricole → migration vers le nord → logement). Chacun affiche son **niveau de preuve** : 7 reproduisent des variantes officielles de l'Insee (intensité et zone verrouillées), 2 sont calés sur l'histoire (2020, 2003), les 24 autres sont des hypothèses de jeu.
 - **Analyse** :
   - récit automatique ;
   - « D'où vient cet écart ? » : naissances, décès, migrations et part de chaque événement ;
@@ -47,13 +47,13 @@ python -m venv .venv-data
   - comparaison avant / après sur la carte.
 - **Modes de jeu** :
   - bac à sable ;
-  - 9 défis notés ;
-  - « Devine » : 8 questions dont les réponses sont calculées par le moteur ;
+  - 9 défis notés, avec des garde-fous (aucun ne se gagne avec une seule carte) et un résultat révélé quand on lance le temps ;
+  - « Devine » : 8 questions dont les réponses sont calculées par le moteur, avec un récapitulatif à partager ;
   - 5 scénarios célèbres ;
   - tutoriel interactif de 4 étapes.
 - **Sauvegarde et partage** :
-  - scénarios enregistrés sur l'appareil ;
-  - lien qui contient tout le scénario ;
+  - scénarios enregistrés sur l'appareil, et le bac à sable en cours repris après une recharge ;
+  - lien qui contient tout le scénario et l'année affichée ;
   - export PNG de la carte et CSV des données ;
   - export et import JSON ;
   - annuler et rétablir sans limite.

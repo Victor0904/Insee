@@ -135,12 +135,52 @@ export async function decodeScenario(s: string): Promise<Scenario | null> {
   }
 }
 
-export async function shareUrl(sc: Scenario): Promise<string> {
+/** Lien de partage ; `year` (facultatif) est l'année affichée à l'ouverture du lien. */
+export async function shareUrl(sc: Scenario, year?: number): Promise<string> {
   const u = new URL(location.href)
   u.hash = ''
   u.searchParams.set('s', await encodeScenario(sc))
+  if (year !== undefined) u.searchParams.set('a', String(Math.round(year)))
+  else u.searchParams.delete('a')
   u.searchParams.delete('tutoriel')
   return u.toString()
+}
+
+/** Année demandée par un lien de partage (?a=2080), si elle est valide. */
+export function sharedYear(search: string, startYear: number, endYear: number): number | null {
+  const a = Number(new URLSearchParams(search).get('a'))
+  return Number.isInteger(a) && a >= startYear && a <= endYear ? a : null
+}
+
+/* ------------------------------------------------------------------ brouillon automatique */
+
+const DRAFT_KEY = 'etsi.draft'
+
+export interface Draft {
+  scenario: Scenario
+  year: number
+  savedAt: string
+}
+
+/** Garde le bac à sable en cours dans le navigateur : une recharge de la page ne le perd plus. */
+export function saveDraft(sc: Scenario, year: number): void {
+  try {
+    if (!sc.events.length && !sc.custom.length && !(sc.randomness > 0)) localStorage.removeItem(DRAFT_KEY)
+    else localStorage.setItem(DRAFT_KEY, JSON.stringify({ scenario: sc, year, savedAt: new Date().toISOString() }))
+  } catch {
+    /* stockage indisponible : pas de brouillon */
+  }
+}
+
+export function loadDraft(): Draft | null {
+  try {
+    const o = JSON.parse(localStorage.getItem(DRAFT_KEY) ?? 'null') as Record<string, unknown> | null
+    const scenario = validateScenario(o?.scenario)
+    if (!o || !scenario || (!scenario.events.length && !scenario.custom.length)) return null
+    return { scenario, year: isNum(o.year) ? o.year : 2025, savedAt: str(o.savedAt, 40) }
+  } catch {
+    return null
+  }
 }
 
 /* ------------------------------------------------------------------ sauvegardes locales */

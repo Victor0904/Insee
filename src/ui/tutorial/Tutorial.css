@@ -83,3 +83,24 @@
     top: 64px;
   }
 }
+
+/*
+ * Écran large : la bulle se range sous la bibliothèque, à gauche, au lieu de couvrir le sud de la
+ * carte et la fiche de réglage (en haut à droite de la carte).
+ */
+@media (min-width: 1201px) {
+  .coach {
+    left: 16px;
+    bottom: 150px;
+    transform: none;
+    width: min(300px, calc(100vw - 32px));
+    animation-name: coach-in-side;
+  }
+}
+
+@keyframes coach-in-side {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

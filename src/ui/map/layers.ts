@@ -133,28 +133,47 @@ function makeClassOf(thresholds: number[]) {
   }
 }
 
-/** Échelle en 9 classes fixe sur toute la période (les couleurs gardent leur sens pendant la lecture). */
+/**
+ * Seuils fixes par couche : une même couleur veut dire la même chose d'un scénario à l'autre et
+ * d'une partie à l'autre (avant, l'échelle s'adaptait aux valeurs : ±1,5 %, ±15 %, ±30 %…).
+ * Couches signées : 4 seuils symétriques (le cinquième intervalle, autour de zéro, est « stable »).
+ */
+const FIXED: Partial<Record<LayerId, number[]>> = {
+  delta: [0.005, 0.02, 0.05, 0.1],
+  growth: [0.02, 0.1, 0.2, 0.4],
+  migration: [1, 3, 6, 10],
+  medianAge: [40, 44, 47, 50, 53, 56, 59, 62],
+  seniors: [35, 45, 55, 65, 75, 85, 95, 110],
+  density: [20, 35, 50, 80, 120, 200, 500, 2000],
+}
+
+/** Échelle en 9 classes, fixe (sur toute la période et d'un scénario à l'autre). */
 export function buildScale(def: LayerDef, values: Float64Array, palette: { diverging: string[]; sequential: string[] }): ClassScale {
   const finite = Array.from(values).filter(Number.isFinite)
+  const fixed = FIXED[def.id]
   if (def.kind === 'signed') {
-    const abs = finite.map(Math.abs).sort((a, b) => a - b)
-    const p95 = abs[Math.floor(abs.length * 0.95)] ?? 0
-    const unit = def.id === 'migration' ? 1 : 0.01
-    const c = Math.max(niceStep(p95 / 3), unit * 0.5)
-    const t = [-3 * c, -2 * c, -c, -c / 4, c / 4, c, 2 * c, 3 * c]
+    const [a, b, c, d] = fixed ?? [0.005, 0.02, 0.05, 0.1]
+    const t = [-d, -c, -b, -a, a, b, c, d]
     const f = def.format
     const labels = [
-      `moins de ${f(-3 * c)}`,
-      `${f(-3 * c)} à ${f(-2 * c)}`,
-      `${f(-2 * c)} à ${f(-c)}`,
-      `${f(-c)} à ${f(-c / 4)}`,
+      `moins de ${f(-d)}`,
+      `${f(-d)} à ${f(-c)}`,
+      `${f(-c)} à ${f(-b)}`,
+      `${f(-b)} à ${f(-a)}`,
       'stable',
-      `${f(c / 4)} à ${f(c)}`,
-      `${f(c)} à ${f(2 * c)}`,
-      `${f(2 * c)} à ${f(3 * c)}`,
-      `plus de ${f(3 * c)}`,
+      `${f(a)} à ${f(b)}`,
+      `${f(b)} à ${f(c)}`,
+      `${f(c)} à ${f(d)}`,
+      `plus de ${f(d)}`,
     ]
     return { thresholds: t, colors: palette.diverging, classOf: makeClassOf(t), labels }
+  }
+  if (fixed) {
+    const f = def.format
+    const labels = Array.from({ length: fixed.length + 1 }, (_, i) =>
+      i === 0 ? `moins de ${f(fixed[0])}` : i === fixed.length ? `${f(fixed[fixed.length - 1])} et plus` : `${f(fixed[i - 1])} à ${f(fixed[i])}`,
+    )
+    return { thresholds: fixed, colors: palette.sequential, classOf: makeClassOf(fixed), labels }
   }
   const sorted = finite.sort((a, b) => a - b)
   const q = (p: number) => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))]

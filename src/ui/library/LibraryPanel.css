@@ -215,3 +215,27 @@
   border: 1px dashed currentColor;
   border-radius: 999px;
 }
+
+/* Écran de faible hauteur : cartes plus compactes (au moins 4 visibles au lieu de 2) */
+@media (max-height: 820px) and (min-width: 961px) {
+  .library__help {
+    display: none;
+  }
+
+  .ev-card {
+    padding: var(--sp-2) var(--sp-3);
+    gap: 2px var(--sp-2);
+  }
+
+  .ev-card__summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .ev-card__more {
+    display: none;
+  }
+}

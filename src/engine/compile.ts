@@ -19,6 +19,8 @@ export function compileData(raw: RawData): ModelData {
     regionIndex[i] = meta.regions.findIndex((r) => r.code === d.reg)
   })
 
+  const overseas = Uint8Array.from(deps, (d) => (d.code.startsWith('97') ? 1 : 0))
+
   const pop0 = new Float64Array(n * SEXES * AGES)
   for (let d = 0; d < n; d++)
     for (let s = 0; s < SEXES; s++)
@@ -38,6 +40,8 @@ export function compileData(raw: RawData): ModelData {
     const row = fertility.rate[yearIndex(fertility.years, startYear + y)]
     for (let a = 0; a < AGES; a++) fert[y * AGES + a] = row[a]
   }
+  const icfRef = new Float64Array(nYears)
+  for (let y = 0; y < nYears; y++) for (let a = 0; a < AGES; a++) icfRef[y] += fert[y * AGES + a]
   const nFertGroups = fertility.groups.length
   const fertGroupOfAge = new Int8Array(AGES).fill(-1)
   fertility.groups.forEach(([lo, hi], g) => {
@@ -66,9 +70,12 @@ export function compileData(raw: RawData): ModelData {
   for (let bg = 0; bg < nBroad; bg++)
     for (let o = 0; o < n; o++) {
       destStart[bg * n + o] = k
-      for (const [dd, p] of internal.dest[bg][o]) {
+      // les parts sont arrondies dans le JSON : on les renormalise pour que chaque départ arrive quelque part
+      const list = internal.dest[bg][o]
+      const sum = list.reduce((t, [, p]) => t + p, 0)
+      for (const [dd, p] of list) {
         destIdx[k] = dd
-        destShare[k] = p
+        destShare[k] = sum > 0 ? p / sum : 0
         k++
       }
     }
@@ -92,11 +99,13 @@ export function compileData(raw: RawData): ModelData {
     departments: deps,
     regions: meta.regions,
     regionIndex,
+    overseas,
     areaKm2: Float64Array.from(raw.areaKm2 ?? new Array<number>(n).fill(NaN)),
     pop0,
     q,
     mortFactor,
     fert,
+    icfRef,
     fertGroupOfAge,
     nFertGroups,
     fertFactor,

@@ -132,6 +132,7 @@ export function EventLanes({ y0, y1 }: { y0: number; y1: number }) {
                   if (e.detail === 0) selectEvent(ev.uid) // Entrée / Espace
                 }}
                 aria-label={label}
+                title={`${name} (${ev.start}-${end})`}
                 aria-pressed={selected === ev.uid}
               >
                 <EventIcon name={def?.icon ?? 'custom'} size={16} />

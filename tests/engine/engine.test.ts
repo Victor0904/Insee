@@ -4,6 +4,10 @@ import { computeIndicators, totalPop } from '../../src/engine/indicators'
 import { simulate } from '../../src/engine/simulate'
 import { AGES, COMP_IN, COMP_OUT, N_COMP, SEXES, type EventDef, type ModelData } from '../../src/engine/types'
 import { emptyScenario, loadAll, noCatalog } from './load'
+import { catalogFor } from '../../src/events/catalog'
+import { decompose } from '../../src/engine/decompose'
+import { EVENT_LIBRARY } from '../../src/events/library'
+import { LITTORAL, SUD } from '../../src/events/zones'
 
 const sumPop = (pop: Float32Array, yi: number, block: number) => {
   let t = 0
@@ -165,5 +169,56 @@ describe('événements', () => {
     const deathsElsewhere = computeIndicators(data, res, areaDeps(data, { level: 'dep', code: '75' }), yi).deaths
     const deathsElsewhereRef = computeIndicators(data, ref, areaDeps(data, { level: 'dep', code: '75' }), yi).deaths
     expect(deathsElsewhere).toBeCloseTo(deathsElsewhereRef, 6)
+  })
+})
+
+describe('retour de test du 4 octobre 2026', () => {
+  const { data } = loadAll()
+  const cat = catalogFor({ custom: [] })
+  const base = simulate(data, emptyScenario(), cat)
+  const FR_ALL = data.departments.map((_, i) => i)
+  const dep = (code: string) => data.departments.findIndex((d) => d.code === code)
+
+  it('les déménagements entre départements s’annulent exactement à l’échelle de la France', () => {
+    // les parts de destination arrondies dans le JSON faisaient « perdre » quelques personnes par an
+    const sc = emptyScenario({ events: [{ uid: 'm', type: 'montee-eaux', start: 2030, duration: 30, intensity: 1, zone: LITTORAL }] })
+    for (const res of [base, simulate(data, sc, cat)]) {
+      const d = decompose(base, res, FR_ALL, 2070 - data.startYear)
+      const net = d.parts.find((p) => p.key === 'in')!.value + d.parts.find((p) => p.key === 'out')!.value
+      expect(Math.abs(net)).toBeLessThan(1)
+      for (const yi of [0, 30, 60]) {
+        let inn = 0
+        let out = 0
+        for (let k = 0; k < data.nDep; k++) {
+          inn += res.comps[(yi * data.nDep + k) * N_COMP + COMP_IN]
+          out += res.comps[(yi * data.nDep + k) * N_COMP + COMP_OUT]
+        }
+        expect(Math.abs(inn - out)).toBeLessThan(0.5)
+      }
+    }
+  })
+
+  it('l’outre-mer n’accueille pas les réfugiés du littoral ni de la chaleur', () => {
+    const yi = 2070 - data.startYear
+    for (const [type, zone] of [
+      ['montee-eaux', LITTORAL],
+      ['canicules-repetees', SUD],
+      ['secheresse', SUD],
+    ] as const) {
+      const res = simulate(data, emptyScenario({ events: [{ uid: 'x', type, start: 2030, duration: 30, intensity: 1, zone }] }), cat)
+      for (const code of ['971', '972', '973', '974', '976']) {
+        const rel = totalPop(res, [dep(code)], yi) / totalPop(base, [dep(code)], yi) - 1
+        expect(rel, `${type} ${code}`).toBeLessThan(0.005)
+      }
+    }
+  })
+
+  it('la variante « fécondité haute » vise un indicateur de 1,70 enfant par femme, pas 1,17 × la référence', () => {
+    const def = EVENT_LIBRARY.find((e) => e.id === 'insee-fecondite-haute')!
+    const res = simulate(data, emptyScenario({ events: [{ uid: 'f', type: def.id, start: 2026, duration: 3, intensity: 1, zone: { level: 'france', codes: [] } }] }), cat)
+    // naissances 2026 : la cible est atteinte en 3 ans, en partant de l'indicateur de référence (1,53)
+    const ratio = (yi: number) => computeIndicators(data, res, FR_ALL, yi).births / computeIndicators(data, base, FR_ALL, yi).births
+    expect(ratio(2027 - data.startYear)).toBeLessThan(1.06)
+    expect(ratio(2035 - data.startYear)).toBeGreaterThan(1.12)
   })
 })

@@ -113,7 +113,7 @@
 }
 
 .legend__swatch--loss {
-  background-image: repeating-linear-gradient(45deg, rgb(0 0 0 / 0.3) 0 1px, transparent 1px 4px) !important;
+  background-image: repeating-linear-gradient(45deg, rgb(0 0 0 / 0.35) 0 var(--hatch-w, 1px), transparent var(--hatch-w, 1px) var(--hatch-gap, 4px)) !important;
   background-blend-mode: multiply;
 }
 
@@ -197,7 +197,8 @@
   inset: 0;
 }
 
-.map--decorative .map__dep {
+.map--decorative .map__dep,
+.map--decorative .map__zdep {
   pointer-events: none;
 }
 

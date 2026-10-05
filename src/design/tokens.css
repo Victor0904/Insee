@@ -5,6 +5,27 @@
 @import '@fontsource/atkinson-hyperlegible-next/400.css';
 @import '@fontsource/atkinson-hyperlegible-next/600.css';
 
+/*
+ * Chiffres : le zéro barré d'Atkinson Hyperlegible se confond avec 6 ou 8 en petite taille
+ * (« 12,0 » lu « 12,6 », « 2070 » lu « 2076 »). Les seuls chiffres 0-9 viennent d'Inter
+ * (zéro plein, chiffres tabulaires), le reste du texte garde Atkinson. Licence : fonts/LICENSE-Inter.txt.
+ */
+@font-face {
+  font-family: 'Et si chiffres';
+  src: url('./fonts/inter-chiffres-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Et si chiffres';
+  src: url('./fonts/inter-chiffres-600.woff2') format('woff2');
+  font-weight: 600 700;
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
 :root {
   color-scheme: light;
   --paper: #f4f2ec;
@@ -26,7 +47,7 @@
   --shadow: 0 1px 2px rgb(24 32 43 / 0.06), 0 4px 16px rgb(24 32 43 / 0.06);
 
   --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
-  --font-body: 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: 'Et si chiffres', 'Atkinson Hyperlegible Next', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
   --fs-12: 0.75rem;
   --fs-14: 0.875rem;

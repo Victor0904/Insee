@@ -10,20 +10,27 @@ import type { Scenario, SimResult } from '../engine/types'
  */
 let running = false
 let pending: Scenario | null = null
+/**
+ * Numéro de la dernière demande. Un calcul n'est affiché que s'il correspond toujours à la
+ * dernière demande : sinon, un calcul lancé avant une annulation qui vide le scénario
+ * (« retour à la référence », sans calcul) écrasait la référence avec un résultat périmé.
+ */
+let generation = 0
 
 async function pump() {
   if (running || !pending) return
   running = true
   const sc = pending
+  const gen = generation
   pending = null
   useApp.setState({ computing: true })
   try {
     const res = await runSimulation(sc)
-    if (res && !pending) {
+    if (res && !pending && gen === generation) {
       const old = useApp.getState().result
       useApp.setState({ result: res, lastRunMs: res.elapsedMs })
       retire(old)
-    }
+    } else if (res && res.pop.byteLength) recycleResult(res)
   } catch (e) {
     console.error('Simulation impossible', e)
   } finally {
@@ -48,6 +55,7 @@ function retire(old: SimResult | null) {
 }
 
 export function requestSimulation(sc: Scenario) {
+  generation++
   const { baseline } = useApp.getState()
   // sans événement ni aléa, le résultat est la référence : inutile de recalculer
   if (baseline && sc.events.length === 0 && !(sc.randomness > 0)) {

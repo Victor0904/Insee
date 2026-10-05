@@ -44,10 +44,10 @@ const insee = (
 })
 
 export const INSEE_VARIANTS: EventDef[] = [
-  insee('insee-fecondite-haute', 'Fécondité haute (Insee)', 'babies', 'Les familles ont 1,7 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.7 / 1.45 }, 3, '11_fec_haute',
-    'Indicateur de fécondité de 1,70 enfant par femme (au lieu de 1,45) : naissances multipliées par 1,17 à chaque âge, atteint en 3 ans puis maintenu.', 2026),
-  insee('insee-fecondite-basse', 'Fécondité basse (Insee)', 'baby', 'Les familles ont 1,2 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.2 / 1.45 }, 5, '12_fec_basse',
-    'Indicateur de fécondité de 1,20 enfant par femme (au lieu de 1,45) : naissances multipliées par 0,83 à chaque âge, atteint en 5 ans puis maintenu.', 2026),
+  insee('insee-fecondite-haute', 'Fécondité haute (Insee)', 'babies', 'Les familles ont 1,7 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.7 / 1.45, targetIcf: 1.7 }, 3, '11_fec_haute',
+    'Indicateur de fécondité amené à 1,70 enfant par femme (au lieu de 1,45 à partir de 2028) : chaque année, les naissances sont multipliées par le rapport entre 1,70 et la fécondité de référence de l’année, cible atteinte en 3 ans puis maintenue.', 2026),
+  insee('insee-fecondite-basse', 'Fécondité basse (Insee)', 'baby', 'Les familles ont 1,2 enfant par femme en moyenne au lieu de 1,45.', { kind: 'fertility', mult: 1.2 / 1.45, targetIcf: 1.2 }, 5, '12_fec_basse',
+    'Indicateur de fécondité amené à 1,20 enfant par femme (au lieu de 1,45 à partir de 2028) : chaque année, les naissances sont multipliées par le rapport entre 1,20 et la fécondité de référence de l’année, cible atteinte en 5 ans puis maintenue.', 2026),
   insee('insee-esperance-haute', 'Espérance de vie haute (Insee)', 'medical', 'On vit plus longtemps que prévu : les gains d’espérance de vie s’accélèrent.', { kind: 'mortality', mult: 0.76 }, 30, '13_ev_haute',
     'Risques de décès réduits progressivement de 24 % en 30 ans puis maintenus : multiplicateur ajusté pour reproduire la variante « espérance de vie haute ».', 2026),
   insee('insee-esperance-basse', 'Espérance de vie basse (Insee)', 'alert', 'Les progrès de l’espérance de vie ralentissent fortement.', { kind: 'mortality', mult: 1.365 }, 44, '14_ev_basse',
@@ -180,11 +180,11 @@ export const EVENT_LIBRARY: EventDef[] = [
     profile: 'ramp',
     persistent: true,
     effects: [
-      { kind: 'leave', rate: 0.006 },
-      { kind: 'attract', mult: 0.6 },
+      { kind: 'leave', rate: 0.004 },
+      { kind: 'attract', mult: 0.75 },
     ],
     hypothesis:
-      'Jusqu’à 0,6 % des habitants du littoral partent chaque année et la zone attire 40 % de nouveaux arrivants en moins, de façon progressive puis durable.',
+      'Jusqu’à 0,4 % des habitants du littoral partent chaque année et la zone attire 25 % de nouveaux arrivants en moins, de façon progressive puis durable. Scénario volontairement marqué : à intensité forte, une région entièrement côtière comme la Bretagne perd environ un dixième de ses habitants en 2070 par rapport à la référence.',
     source: 'Hypothèse de jeu.',
     estimated: true,
   },

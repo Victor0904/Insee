@@ -74,6 +74,11 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
   const depTotal = new Float64Array(n)
   const norm = new Float64Array(data.nBroad * n)
   const moverBg = new Float64Array(SEXES * data.nBroad)
+  const extraBg = new Float64Array(SEXES * data.nBroad)
+  const overseas = data.overseas
+  let maxDest = 0
+  for (let i = 0; i < data.nBroad * n; i++) maxDest = Math.max(maxDest, data.destStart[i + 1] - data.destStart[i])
+  const shareTmp = new Float64Array(maxDest)
   const moverProfile = new Float64Array(SEXES * AGES)
   const bgTotals = new Float64Array(SEXES * data.nBroad)
   const inflowBg = new Float64Array(n * SEXES * data.nBroad)
@@ -180,13 +185,22 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
       for (let i = 0; i < cell; i++) t += next[d * cell + i]
       depTotal[d] = t
     }
+    // Attractivité modifiée : les parts des destinations sont repondérées puis renormalisées.
+    // Depuis la métropole, les parts vers l'outre-mer gardent leur valeur absolue : un littoral
+    // ou un Sud devenus répulsifs ne poussent pas les habitants vers des îles tropicales
+    // (renormalisation limitée aux destinations de métropole).
     if (mods.anyAttract) {
       for (let bg = 0; bg < data.nBroad; bg++)
         for (let o = 0; o < n; o++) {
+          const metroOrigin = overseas[o] === 0
           let z = 0
-          for (let k = data.destStart[bg * n + o]; k < data.destStart[bg * n + o + 1]; k++)
-            z += data.destShare[k] * mods.attract[bg * n + data.destIdx[k]]
-          norm[bg * n + o] = z > 0 ? 1 / z : 0
+          let fixed = 0
+          for (let k = data.destStart[bg * n + o]; k < data.destStart[bg * n + o + 1]; k++) {
+            const v = data.destShare[k] * mods.attract[bg * n + data.destIdx[k]]
+            if (metroOrigin && overseas[data.destIdx[k]]) fixed += v
+            else z += v
+          }
+          norm[bg * n + o] = z > 0 ? Math.max(0, 1 - fixed) / z : 0
         }
     }
     // Les départs sont calculés par âge simple. Les arrivées sont d'abord cumulées par
@@ -200,20 +214,32 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
     for (let o = 0; o < n; o++) {
       let outTotal = 0
       moverBg.fill(0)
+      extraBg.fill(0)
+      let anyExtra = false
+      // depuis la métropole, les départs supplémentaires (événements « des gens partent ») vont
+      // vers d'autres départements de métropole, pas vers l'outre-mer
+      const metroOrigin = overseas[o] === 0
       for (let s = 0; s < SEXES; s++) {
         const rBase = (o * SEXES + s) * 20
         const base = o * cell + s * AGES
         for (let a = 0; a < AGES; a++) {
           const p = next[base + a]
-          const rate = Math.min(
-            MAX_OUT_RATE,
-            data.migRate[rBase + Math.min(Math.floor(a / 5), 19)] * migNoise[o] + mods.leave[o * AGES + a],
-          )
+          if (p === 0) continue
+          const bg = data.ageToBroad[a]
+          // pas de destination connue (Mayotte) : personne ne part, sinon les départs disparaîtraient
+          if (data.destStart[bg * n + o + 1] === data.destStart[bg * n + o]) continue
+          const baseRate = Math.min(MAX_OUT_RATE, data.migRate[rBase + Math.min(Math.floor(a / 5), 19)] * migNoise[o])
+          const rate = Math.min(MAX_OUT_RATE, baseRate + mods.leave[o * AGES + a])
           const m = p * rate
           if (m === 0) continue
           delta[base + a] -= m
           moverProfile[s * AGES + a] += m
-          moverBg[s * nB + data.ageToBroad[a]] += m
+          if (metroOrigin && rate > baseRate) {
+            const extra = p * (rate - baseRate)
+            extraBg[s * nB + bg] += extra
+            moverBg[s * nB + bg] += m - extra
+            anyExtra = true
+          } else moverBg[s * nB + bg] += m
           outTotal += m
         }
       }
@@ -222,17 +248,44 @@ export function simulate(data: ModelData, scenario: Scenario, catalog: EventCata
       for (let bg = 0; bg < nB; bg++) {
         const mH = moverBg[bg]
         const mF = moverBg[nB + bg]
-        if (mH + mF === 0) continue
+        const xH = anyExtra ? extraBg[bg] : 0
+        const xF = anyExtra ? extraBg[nB + bg] : 0
+        if (mH + mF + xH + xF === 0) continue
         const k0 = data.destStart[bg * n + o]
         const k1 = data.destStart[bg * n + o + 1]
         const z = mods.anyAttract ? norm[bg * n + o] : 1
+        // part effective de chaque destination, et total des destinations de métropole
+        let zMetro = 0
         for (let k = k0; k < k1; k++) {
           const dd = data.destIdx[k]
-          const share = mods.anyAttract ? data.destShare[k] * mods.attract[bg * n + dd] * z : data.destShare[k]
-          inflowBg[(dd * SEXES) * nB + bg] += mH * share
-          inflowBg[(dd * SEXES + 1) * nB + bg] += mF * share
-          if (flows) flows[flowBase + o * n + dd] += (mH + mF) * share
+          const fixed = metroOrigin && overseas[dd] === 1
+          const share = mods.anyAttract ? data.destShare[k] * mods.attract[bg * n + dd] * (fixed ? 1 : z) : data.destShare[k]
+          shareTmp[k - k0] = share
+          if (overseas[dd] === 0) zMetro += share
         }
+        const xScale = xH + xF > 0 && zMetro > 0 ? 1 / zMetro : 0
+        for (let k = k0; k < k1; k++) {
+          const dd = data.destIdx[k]
+          let share = shareTmp[k - k0]
+          let vH = mH * share
+          let vF = mF * share
+          if (xScale > 0 && overseas[dd] === 0) {
+            share *= xScale
+            vH += xH * share
+            vF += xF * share
+          }
+          inflowBg[(dd * SEXES) * nB + bg] += vH
+          inflowBg[(dd * SEXES + 1) * nB + bg] += vF
+          if (flows) flows[flowBase + o * n + dd] += vH + vF
+        }
+        // sans destination en métropole (cas théorique), les départs supplémentaires suivent les parts habituelles
+        if (xH + xF > 0 && xScale === 0)
+          for (let k = k0; k < k1; k++) {
+            const dd = data.destIdx[k]
+            inflowBg[(dd * SEXES) * nB + bg] += xH * shareTmp[k - k0]
+            inflowBg[(dd * SEXES + 1) * nB + bg] += xF * shareTmp[k - k0]
+            if (flows) flows[flowBase + o * n + dd] += (xH + xF) * shareTmp[k - k0]
+          }
       }
     }
     // profil par âge des migrants au sein de chaque classe large

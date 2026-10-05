@@ -7,7 +7,7 @@ import { Term } from '../common/Term'
 import { ChallengePill } from '../game/ChallengePill'
 import { useMediaQuery } from '../hooks/useMediaQuery'
 import { PALETTES, type Theme } from '../theme'
-import { FranceMap } from './FranceMap'
+import { FranceMap, HATCH } from './FranceMap'
 import type { MapGeometry } from './geo'
 import { buildScale, layerById, layerMatrix, LAYERS } from './layers'
 import './MapView.css'
@@ -159,14 +159,14 @@ export function MapView({ geom, theme }: { geom: MapGeometry; theme: Theme }) {
               <li key={c + i}>
                 <span
                   className={`legend__swatch ${layer.kind === 'signed' && i < 4 ? 'legend__swatch--loss' : ''}`}
-                  style={{ background: c }}
+                  style={{ background: c, ...(layer.kind === 'signed' && i < 4 ? ({ '--hatch-gap': `${HATCH[i].gap}px`, '--hatch-w': `${HATCH[i].width}px` } as React.CSSProperties) : {}) }}
                 />
                 {scale.labels[i]}
               </li>
             ))}
           </ol>
           <p className="legend__note">{layer.explain}</p>
-          {layer.kind === 'signed' && <p className="legend__note">Hachures : baisse.</p>}
+          {layer.kind === 'signed' && <p className="legend__note">Hachures : baisse (plus serrées quand elle est forte).</p>}
           {showFlows && <p className="legend__note">Arcs : principaux déménagements nets de l’année.</p>}
         </details>
       </div>
